@@ -6,7 +6,6 @@
     "ng": "ng",
     "kill:dev": "node scripts/kill-dev.mjs",
     "dev": "npm run kill:dev && concurrently -n server,client -c magenta,cyan \"npm run dev:server\" \"npm run dev:client\"",
-    "dev:stable": "npm run kill:dev && concurrently -n server,client -c magenta,cyan \"npm run start:server\" \"npm run dev:client\"",
     "dev:micro": "npm run kill:dev && concurrently -n gateway,auth,rag,images,chat,media,speech,jokes,recipes,profile,usage,platform,monolith,client -c yellow,red,green,blue,white,gray,orange,magenta,cyan,blueBright,greenBright,yellowBright,greenBright,magenta \"npm run start:gateway\" \"npm run start:auth\" \"npm run start:rag\" \"npm run start:images\" \"npm run start:chat\" \"npm run start:media\" \"npm run start:speech\" \"npm run start:jokes\" \"npm run start:recipes\" \"npm run start:profile\" \"npm run start:usage\" \"npm run start:platform\" \"npm run start:monolith\" \"npm run dev:client\"",
     "dev:client": "ng serve --port 4200 --proxy-config proxy.conf.json",
     "dev:server": "cross-env PORT=4800 npm --prefix backend/server run dev",
