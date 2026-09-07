@@ -1,0 +1,134 @@
+{
+  "development": {
+    "frontend": {
+      "port": 4200,
+      "host": "localhost"
+    },
+    "backend": {
+      "port": 4800,
+      "host": "localhost"
+    },
+    "api": {
+      "baseUrl": "http://localhost:4800",
+      "endpoints": {
+        "youtube": {
+          "search": "/api/youtube/search",
+          "saveSearch": "/api/youtube/save-search",
+          "checkSaved": "/api/youtube/check-saved",
+          "deleteSaved": "/api/youtube/saved-searches"
+        },
+        "chat": "/api/chat",
+        "tts": "/api/tts",
+        "analyze-image": "/api/analyze-image",
+        "jokes": {
+          "list": "/api/jokes",
+          "create": "/api/jokes",
+          "update": "/api/jokes",
+          "delete": "/api/jokes"
+        }
+      }
+    },
+    "audio": {
+      "tts": {
+        "defaultVoice": "en-US-AndrewNeural",
+        "rate": 0.9,
+        "pitch": 1.0,
+        "volume": 1.0,
+        "maxChunkLength": 150,
+        "pauseDuration": 400,
+        "retryDelay": 1000,
+        "maxRetries": 3
+      },
+      "recognition": {
+        "language": "en-US",
+        "continuous": true,
+        "interimResults": true,
+        "silenceTimeout": 1500
+      }
+    },
+    "youtube": {
+      "cache": {
+        "maxAgeHours": 24,
+        "keyPrefix": "yt_"
+      },
+      "database": {
+        "defaultUserId": "default-user",
+        "collection": "youtube_searches"
+      },
+      "ui": {
+        "ledIndicators": {
+          "saved": "🟢",
+          "unsaved": ""
+        },
+        "saveButton": "💾",
+        "deleteButton": "❌"
+      }
+    }
+  },
+  "production": {
+    "frontend": {
+      "port": 5500,
+      "host": "localhost"
+    },
+    "backend": {
+      "port": 5501,
+      "host": "localhost"
+    },
+    "api": {
+      "baseUrl": "http://localhost:5501",
+      "endpoints": {
+        "youtube": {
+          "search": "/api/youtube/search",
+          "saveSearch": "/api/youtube/save-search",
+          "checkSaved": "/api/youtube/check-saved",
+          "deleteSaved": "/api/youtube/saved-searches"
+        },
+        "chat": "/api/chat",
+        "tts": "/api/tts",
+        "analyze-image": "/api/analyze-image",
+        "jokes": {
+          "list": "/api/jokes",
+          "create": "/api/jokes",
+          "update": "/api/jokes",
+          "delete": "/api/jokes"
+        }
+      }
+    },
+    "audio": {
+      "tts": {
+        "defaultVoice": "en-US-AndrewNeural",
+        "rate": 0.9,
+        "pitch": 1.0,
+        "volume": 1.0,
+        "maxChunkLength": 150,
+        "pauseDuration": 400,
+        "retryDelay": 1000,
+        "maxRetries": 3
+      },
+      "recognition": {
+        "language": "en-US",
+        "continuous": true,
+        "interimResults": true,
+        "silenceTimeout": 1500
+      }
+    },
+    "youtube": {
+      "cache": {
+        "maxAgeHours": 24,
+        "keyPrefix": "yt_"
+      },
+      "database": {
+        "defaultUserId": "default-user",
+        "collection": "youtube_searches"
+      },
+      "ui": {
+        "ledIndicators": {
+          "saved": "🟢",
+          "unsaved": ""
+        },
+        "saveButton": "💾",
+        "deleteButton": "❌"
+      }
+    }
+  }
+} 

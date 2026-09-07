@@ -1,0 +1,14 @@
+<div class="app">
+  <app-header />
+  <div class="app-body">
+    @if (auth.ready()) {
+      <router-outlet />
+    } @else {
+      <main class="app-content feature-page">
+        <p class="hint">Loading…</p>
+      </main>
+    }
+  </div>
+  <app-footer />
+  <app-toast-stack />
+</div>

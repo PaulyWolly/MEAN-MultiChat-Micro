@@ -1,0 +1,44 @@
+<main class="app-content feature-page jokes-page">
+  <div class="page-chrome">
+    <div class="jokes-toolbar">
+      <form class="feature-form jokes-search-form" (submit)="save($event)">
+        <app-voice-mic-button (transcript)="onVoice($event)" (failed)="toast.show($event, 'error')" />
+        <app-clearable-input [value]="title()" (valueChange)="title.set($event)" placeholder="Joke title — or use Mic to find one" ariaLabel="Joke title" />
+        <button type="submit" class="secondary-button jokes-toolbar-btn" [disabled]="saving() || !title().trim() || !content.trim()">
+          {{ saving() ? '…' : 'Save' }}
+        </button>
+        <button type="button" class="speak-toggle-button jokes-toolbar-btn" [class.is-speaking]="speaking()" (click)="toggleSpeak()">
+          {{ speaking() ? 'Stop reading' : 'Read aloud' }}
+        </button>
+        <button type="button" class="secondary-button jokes-toolbar-btn jokes-history-btn" (click)="load(); historyOpen.set(true)">
+          History
+        </button>
+      </form>
+    </div>
+    <p class="hint jokes-intro-hint">
+      Use <strong>Mic</strong> to find a joke, <strong>Save</strong> new ones, <strong>Read aloud</strong>, or open
+      <strong>History</strong>.
+    </p>
+    <div class="jokes-compose-row">
+      <textarea class="jokes-compose-content" [(ngModel)]="content" name="jokeContent" rows="2" placeholder="Joke content" aria-label="Joke content"></textarea>
+    </div>
+  </div>
+
+  <div class="page-scroll">
+    @if (selected()) {
+      <article class="joke-selected">
+        <h3>{{ selected().title }}</h3>
+        <p>{{ selected().content }}</p>
+      </article>
+    }
+  </div>
+
+  <app-jokes-history-modal
+    [open]="historyOpen()"
+    [items]="jokes()"
+    [activeId]="selected()?._id || selected()?.title || ''"
+    (closed)="historyOpen.set(false)"
+    (selected)="select($event)"
+    (refreshed)="load()"
+  />
+</main>

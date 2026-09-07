@@ -1,0 +1,120 @@
+<div class="profile-menu">
+  @if (welcomeLabel) {
+    <span class="profile-welcome" [title]="welcomeLabel">{{ welcomeLabel }}</span>
+  }
+  <button
+    type="button"
+    class="profile-avatar-button"
+    aria-haspopup="menu"
+    [attr.aria-expanded]="open()"
+    aria-label="Profile menu"
+    title="Profile"
+    (click)="open.set(!open())"
+  >
+    @if (avatarUrl) {
+      <img [src]="avatarUrl" alt="" class="profile-avatar-img" />
+    } @else {
+      <span class="profile-avatar-initials">{{ initials }}</span>
+    }
+  </button>
+
+  @if (open()) {
+    <div class="profile-dropdown" role="menu">
+      <div class="profile-dropdown-header">
+        <div class="profile-dropdown-avatar-wrap">
+          @if (avatarUrl) {
+            <img [src]="avatarUrl" alt="" class="profile-avatar-img" />
+          } @else {
+            <span class="profile-avatar-initials">{{ initials }}</span>
+          }
+        </div>
+        <div class="profile-dropdown-meta">
+          <strong>{{ profile()?.name || (auth.isAuthenticated() ? 'My Profile' : 'Guest') }}</strong>
+          <span>{{ auth.user()?.email || 'Not signed in' }}</span>
+        </div>
+      </div>
+
+      <div class="profile-menu-divider"></div>
+
+      <button
+        type="button"
+        class="profile-menu-item profile-menu-item-primary"
+        role="menuitem"
+        (click)="openProfile()"
+      >
+        My Profile
+      </button>
+
+      <a
+        routerLink="/demo/users"
+        class="profile-menu-item"
+        role="menuitem"
+        (click)="open.set(false)"
+      >
+        Users demo (Material table) RxJs Observable
+      </a>
+
+      <div class="profile-menu-divider"></div>
+
+      <div class="profile-menu-row">
+        <span>Theme</span>
+        <button type="button" class="secondary-button profile-menu-action" (click)="appState.toggleTheme()">
+          {{ appState.theme() === 'dark' ? 'Light' : 'Dark' }}
+        </button>
+      </div>
+
+      <label class="profile-menu-row">
+        <span>Model</span>
+        <select [value]="appState.selectedModel()" (change)="onModelChange($event)" aria-label="AI model">
+          <option value="openai">OpenAI (default)</option>
+          <option value="claude">Claude</option>
+        </select>
+      </label>
+
+      <label class="profile-menu-row">
+        <span>Voice</span>
+        <select [value]="appState.selectedVoiceId()" (change)="onVoiceChange($event)" aria-label="Choose speaking voice">
+          @for (voice of voices; track voice.id) {
+            <option [value]="voice.id">{{ voice.label }}</option>
+          }
+        </select>
+      </label>
+
+      <div class="profile-menu-row">
+        <span>Preview voice</span>
+        <button type="button" class="secondary-button profile-menu-action" (click)="previewVoice()" [disabled]="previewing()">
+          {{ previewing() ? '…' : 'Preview' }}
+        </button>
+      </div>
+      @if (previewError()) {
+        <p class="profile-menu-error" [title]="previewError()">TTS error</p>
+      }
+
+      <div class="profile-menu-row">
+        <span>Chat</span>
+        <button type="button" class="secondary-button profile-menu-action" (click)="clearChat()">Clear</button>
+      </div>
+
+      <div class="profile-menu-divider"></div>
+
+      @if (auth.isAuthenticated()) {
+        <button type="button" class="profile-menu-item" role="menuitem" (click)="signOut()">Logout</button>
+      } @else if (auth.isGuest()) {
+        <a routerLink="/login" class="profile-menu-item" role="menuitem" (click)="open.set(false)">
+          Sign in for full access
+        </a>
+        <button type="button" class="profile-menu-item" role="menuitem" (click)="signOut()">Exit guest</button>
+      } @else {
+        <a routerLink="/login" class="profile-menu-item" role="menuitem" (click)="open.set(false)">Sign in</a>
+      }
+    </div>
+  }
+</div>
+
+<app-my-profile-modal
+  [open]="profileOpen()"
+  [initialProfile]="profile()"
+  [readOnly]="auth.isGuest()"
+  (closed)="profileOpen.set(false)"
+  (saved)="onProfileSaved($event)"
+/>

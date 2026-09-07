@@ -1,0 +1,221 @@
+@if (open()) {
+  <div
+    class="my-profile-modal-overlay"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="my-profile-title"
+  >
+    <div class="my-profile-modal">
+      <div class="my-profile-modal-header">
+        <h3 id="my-profile-title">My Profile</h3>
+        <app-modal-close-button (close)="closed.emit()" />
+      </div>
+
+      <form class="my-profile-form" (submit)="save($event)">
+        <div class="my-profile-body">
+          @if (readOnly()) {
+            <p class="hint my-profile-guest-notice" role="status">
+              Guest mode is view-only. Sign in to upload a photo or save a personal profile.
+            </p>
+          }
+
+          <div class="my-profile-avatar-block">
+            <div class="my-profile-avatar-preview">
+              @if (avatarUrl) {
+                <img [src]="avatarUrl" alt="Profile photo" class="profile-avatar-img" />
+              } @else {
+                <span class="profile-avatar-initials lg">{{ initials }}</span>
+              }
+            </div>
+            @if (!readOnly()) {
+              <div class="my-profile-avatar-actions">
+                <label class="secondary-button my-profile-upload-btn">
+                  Upload photo
+                  <input type="file" accept="image/*" hidden (change)="onAvatarChange($event)" />
+                </label>
+                @if (avatarUrl) {
+                  <button type="button" class="linkish-button" (click)="setField('avatar', '')">
+                    Remove photo
+                  </button>
+                }
+                <p class="hint my-profile-photo-hint">
+                  Photo is resized and stored with your MongoDB profile.
+                </p>
+              </div>
+            }
+          </div>
+
+          <div class="my-profile-fields">
+            @if (loginParts.email) {
+              <p class="hint my-profile-account-meta">
+                {{ loginParts.prefix }}<strong>{{ loginParts.email }}</strong>{{ loginParts.role }}.
+              </p>
+            }
+
+            @for (field of editableFields; track field.key) {
+              <div class="my-profile-field-row">
+                <label class="my-profile-field">
+                  <span>{{ field.label }}</span>
+                  <input
+                    [attr.data-profile-field]="field.key"
+                    [value]="draft()[field.key] || ''"
+                    (input)="setField(field.key, $any($event.target).value)"
+                    [placeholder]="field.placeholder"
+                    [readonly]="isFieldLocked(field.key)"
+                    [disabled]="readOnly()"
+                  />
+                </label>
+                <div class="my-profile-field-actions">
+                  @if (!readOnly() && hasStoredValue(field.key)) {
+                    <button
+                      type="button"
+                      class="my-profile-edit-btn"
+                      [title]="'Edit ' + field.label"
+                      [attr.aria-label]="'Edit ' + field.label"
+                      [disabled]="deleting() || saving() || isEditing(field.key)"
+                      (click)="startEdit(field.key)"
+                    >
+                      <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                        <path
+                          fill="currentColor"
+                          d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
+                        />
+                      </svg>
+                    </button>
+                    <button
+                      type="button"
+                      class="my-profile-delete-btn"
+                      [title]="'Delete ' + field.label"
+                      [attr.aria-label]="'Delete ' + field.label"
+                      [disabled]="deleting() || saving()"
+                      (click)="requestDelete(field.key)"
+                    >
+                      <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                        <path
+                          fill="currentColor"
+                          d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
+                        />
+                      </svg>
+                    </button>
+                  } @else {
+                    <span class="my-profile-delete-spacer" aria-hidden="true"></span>
+                    <span class="my-profile-delete-spacer" aria-hidden="true"></span>
+                  }
+                </div>
+              </div>
+            }
+
+            @for (key of extraKeys; track key) {
+              <div class="my-profile-field-row">
+                <label class="my-profile-field">
+                  <span>{{ fieldLabel(key) }}</span>
+                  <input
+                    [attr.data-profile-field]="key"
+                    [value]="draft()[key] || ''"
+                    (input)="setField(key, $any($event.target).value)"
+                    [readonly]="isFieldLocked(key)"
+                    [disabled]="readOnly()"
+                  />
+                </label>
+                <div class="my-profile-field-actions">
+                  @if (!readOnly() && hasStoredValue(key)) {
+                    <button
+                      type="button"
+                      class="my-profile-edit-btn"
+                      [title]="'Edit ' + fieldLabel(key)"
+                      [attr.aria-label]="'Edit ' + fieldLabel(key)"
+                      [disabled]="deleting() || saving() || isEditing(key)"
+                      (click)="startEdit(key)"
+                    >
+                      <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                        <path
+                          fill="currentColor"
+                          d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
+                        />
+                      </svg>
+                    </button>
+                    <button
+                      type="button"
+                      class="my-profile-delete-btn"
+                      [title]="'Delete ' + fieldLabel(key)"
+                      [attr.aria-label]="'Delete ' + fieldLabel(key)"
+                      [disabled]="deleting() || saving()"
+                      (click)="requestDelete(key)"
+                    >
+                      <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                        <path
+                          fill="currentColor"
+                          d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
+                        />
+                      </svg>
+                    </button>
+                  } @else {
+                    <span class="my-profile-delete-spacer" aria-hidden="true"></span>
+                    <span class="my-profile-delete-spacer" aria-hidden="true"></span>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+
+          @if (!readOnly()) {
+            <div class="my-profile-custom">
+              <p class="hint">Add another detail</p>
+              <div class="my-profile-custom-row">
+                <input
+                  [(ngModel)]="customKey"
+                  name="customKey"
+                  placeholder="Label (e.g. pet)"
+                  aria-label="Custom field label"
+                />
+                <input
+                  [(ngModel)]="customValue"
+                  name="customValue"
+                  placeholder="Value"
+                  aria-label="Custom field value"
+                />
+                <button type="button" class="secondary-button" (click)="addCustom($event)">Add</button>
+              </div>
+            </div>
+          }
+
+          @if (error()) {
+            <p class="chat-error">{{ error() }}</p>
+          }
+          @if (message()) {
+            <p class="hint my-profile-saved">{{ message() }}</p>
+          }
+        </div>
+
+        @if (!readOnly()) {
+          <div class="my-profile-actions">
+            <button
+              type="submit"
+              class="confirm-modal-btn confirm-modal-btn-accent"
+              [disabled]="saving() || deleting()"
+            >
+              {{ saving() ? 'Saving…' : 'Save to MongoDB' }}
+            </button>
+          </div>
+        }
+      </form>
+    </div>
+  </div>
+}
+
+<app-confirm-modal
+  [open]="!!pendingDelete()"
+  title="Delete profile detail?"
+  [message]="
+    'Permanently delete “' +
+    (pendingDelete()?.label || 'this detail') +
+    '”' +
+    (pendingDelete()?.value ? ' (' + pendingDelete()?.value + ')' : '') +
+    ' from your MongoDB profile? Chat will no longer remember it. This cannot be undone.'
+  "
+  confirmText="Delete"
+  cancelText="Cancel"
+  confirmVariant="danger"
+  (confirmed)="confirmDelete()"
+  (cancelled)="pendingDelete.set(null)"
+/>

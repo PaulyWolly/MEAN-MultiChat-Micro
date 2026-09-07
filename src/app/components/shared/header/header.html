@@ -1,0 +1,51 @@
+<header class="app-header">
+  <div class="header-text">
+    <div class="header-brand">
+      <h1>
+        MEAN-MultiChat
+        <span class="header-micro-label">Microservices</span>
+      </h1>
+    </div>
+    <nav class="main-nav" aria-label="Main">
+      @if (aiNav.length) {
+        <div class="nav-ai-group" aria-label="AI tools">
+          <span class="nav-ai-label">AI</span>
+          @for (item of aiNav; track item.to; let last = $last) {
+            <a
+              [routerLink]="item.to"
+              routerLinkActive="active"
+              [routerLinkActiveOptions]="{ exact: item.exact }"
+            >
+              {{ item.label }}
+            </a>
+            @if (!last) {
+              <span class="nav-ai-sep" aria-hidden="true">|</span>
+            }
+          }
+        </div>
+      }
+      @for (item of otherNav; track item.to) {
+        <a [routerLink]="item.to" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: item.exact }">
+          {{ item.label }}
+        </a>
+      }
+      @if (showAbout) {
+        <span> | </span>
+        <a routerLink="/about" routerLinkActive="active">About</a>
+      }
+      <a routerLink="/login" routerLinkActive="active">{{ accountLabel }}</a>
+    </nav>
+  </div>
+
+  @if (pageTitleWords.length) {
+    <h2 class="header-page-title">
+      @for (word of pageTitleWords; track $index) {
+        <span class="header-page-title-word">{{ word }}</span>
+      }
+    </h2>
+  }
+
+  <div class="header-actions">
+    <app-profile-menu />
+  </div>
+</header>

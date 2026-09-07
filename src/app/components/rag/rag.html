@@ -1,0 +1,153 @@
+<main class="app-content feature-page rag-page">
+  <div class="page-chrome">
+    <p class="hint rag-intro-hint">
+      This is <strong>Retrieval Augmented Generation (RAG)</strong> — upload a PDF or text file, then ask questions
+      grounded in that document.
+      <app-help-button topic="rag" />
+    </p>
+    @if (ragLimits(); as limits) {
+      <p class="ai-usage-hint" [class.is-exhausted]="documents().length >= limits.maxDocs">
+        {{ documents().length >= limits.maxDocs
+          ? 'Document limit reached (' + limits.maxDocs + '). Delete one to upload another.'
+          : documents().length + ' of ' + limits.maxDocs + ' documents used · up to ' + limits.maxUploadMb + ' MB per file.' }}
+      </p>
+    }
+  </div>
+  <div class="page-scroll rag-page-scroll">
+    <div class="rag-layout">
+      <div class="rag-layout__left">
+        <label class="rag-upload-dropzone">
+          <span class="rag-upload-dropzone__title">{{ uploading() ? 'Uploading & indexing…' : 'Upload a document' }}</span>
+          <span class="rag-upload-dropzone__hint">PDF, .txt, or .md — up to {{ maxUploadMb() }} MB (use files saved locally, not OneDrive online-only)</span>
+          <input type="file" accept=".pdf,.txt,.md,application/pdf,text/plain,text/markdown" [disabled]="uploading()" (change)="onUpload($event)" />
+        </label>
+        @if (uploadError()) {
+          <p class="chat-error">{{ uploadError() }}</p>
+        }
+
+        <div class="rag-document-list">
+          <div class="rag-document-list__header">
+            <h3>Your documents</h3>
+            <button
+              type="button"
+              class="rag-doc-chip"
+              [class.is-active]="allDocsSelected()"
+              [attr.aria-pressed]="allDocsSelected()"
+              [disabled]="!readyDocs().length"
+              [title]="allDocsSelected() ? 'Clear selection' : 'Select every ready document'"
+              (click)="toggleAllDocs()"
+            >
+              All docs
+            </button>
+          </div>
+
+          @if (listLoading() && !documents().length) {
+            <p class="hint">Loading documents…</p>
+          } @else if (!documents().length) {
+            <p class="hint rag-docs-empty">No documents yet — upload a file above to get started.</p>
+          } @else {
+            <div class="rag-document-list__items" role="list">
+              @for (doc of documents(); track doc.id) {
+                <div class="rag-document-item" role="listitem" [class.is-selected]="isSelected(doc.id)">
+                  <label class="rag-document-item__label">
+                    <input
+                      type="checkbox"
+                      class="rag-document-item__check"
+                      [checked]="isSelected(doc.id)"
+                      [disabled]="isLocked(doc)"
+                      (change)="setDocSelected(doc.id, $any($event.target).checked)"
+                    />
+                    <span class="rag-document-item__copy">
+                      <span class="rag-document-item__name">{{ doc.filename || doc.name || doc.id }}</span>
+                      <span class="rag-document-item__meta">
+                        @if (isLocked(doc) && doc.status === 'processing') {
+                          Processing…
+                        } @else if (isLocked(doc)) {
+                          {{ doc.error || 'Error' }}
+                        } @else {
+                          {{ doc.chunkCount || 0 }} chunks
+                        }
+                      </span>
+                    </span>
+                  </label>
+                  <button
+                    type="button"
+                    class="secondary-button rag-document-item__delete"
+                    title="Delete document"
+                    (click)="pendingDelete.set(doc)"
+                  >
+                    Delete
+                  </button>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+      <div class="rag-layout__right">
+        <div class="rag-ask-panel">
+          <h3>Ask a question</h3>
+          <form class="feature-form stacked rag-ask-form" (submit)="ask($event)">
+            <textarea
+              class="rag-ask-input"
+              rows="3"
+              [(ngModel)]="question"
+              name="ragQuestion"
+              [disabled]="asking() || !canAsk()"
+              [placeholder]="askPlaceholder()"
+              aria-label="RAG question"
+              (keydown)="onAskKeyDown($event)"
+            ></textarea>
+            <div class="rag-ask-actions">
+              <button type="submit" [disabled]="asking() || !canAsk() || !question.trim()">
+                {{ asking() ? 'Thinking…' : 'Ask' }}
+              </button>
+            </div>
+          </form>
+          @if (askError()) {
+            <p class="chat-error">{{ askError() }}</p>
+          }
+          <div class="rag-answer" aria-live="polite">
+            @if (answer()) {
+              <div class="rag-answer__toolbar">
+                <button
+                  type="button"
+                  class="secondary-button rag-answer-expand-btn"
+                  title="Open answer in a larger window"
+                  (click)="answerOpen.set(true)"
+                >
+                  <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                    <path
+                      fill="currentColor"
+                      d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"
+                    />
+                  </svg>
+                  Expand
+                </button>
+              </div>
+              <article class="rag-answer__body">{{ answer() }}</article>
+            } @else if (!asking()) {
+              <p class="hint rag-answer__placeholder">The answer will appear here.</p>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <app-confirm-modal
+    [open]="!!pendingDelete()"
+    title="Delete document?"
+    [message]="'Permanently delete “' + (pendingDelete()?.filename || 'this document') + '”? Its text and embeddings are removed. This cannot be undone.'"
+    confirmText="Delete"
+    cancelText="Cancel"
+    (confirmed)="confirmDelete()"
+    (cancelled)="pendingDelete.set(null)"
+  />
+  <app-rag-answer-modal
+    [open]="answerOpen() && !!answer()"
+    [question]="askedQuestion()"
+    [answer]="answer()"
+    [sources]="sources()"
+    (closed)="answerOpen.set(false)"
+  />
+</main>

@@ -1,0 +1,43 @@
+<main class="app-content feature-page recipes-page">
+  <div class="page-chrome no-print">
+    <div class="recipes-toolbar">
+      <form class="feature-form recipes-search-form" (submit)="onSubmit($event)">
+        <app-voice-mic-button (transcript)="onVoice($event)" (failed)="toast.show($event, 'error')" [disabled]="loading()" />
+        <app-clearable-input [value]="prompt()" (valueChange)="prompt.set($event)" placeholder="e.g. lemon chicken pasta — or use Mic" ariaLabel="Recipe request" />
+        <app-search-icon-button [loading]="loading()" [disabled]="loading()" />
+        <button type="button" class="secondary-button recipes-toolbar-btn" (click)="print()" [disabled]="!recipeText()">Print</button>
+        <button
+          type="button"
+          class="speak-toggle-button recipes-toolbar-btn"
+          [class.is-speaking]="speaking()"
+          (click)="toggleSpeak()"
+          [disabled]="!recipeText()"
+        >
+          {{ speaking() ? 'Stop reading' : 'Read aloud' }}
+        </button>
+      </form>
+    </div>
+    <p class="hint recipes-intro-hint">
+      Type a dish or use <strong>Mic</strong>. Search generates a recipe — then <strong>Print</strong> or
+      <strong>Read aloud</strong>.
+    </p>
+  </div>
+
+  <div class="page-scroll">
+    @if (recipeText()) {
+      <div class="recipe-print-root">
+        <div class="recipe-with-image-fallback">
+          <article class="recipe-body recipe-print-area" [innerHTML]="displayMarkdown | markdown"></article>
+          <aside class="recipe-image-panel" aria-label="Recipe photo">
+            @if (imageLoading()) {
+              <p class="hint recipe-image-status">Finding a photo…</p>
+            }
+            @if (recipeImage()) {
+              <img class="recipe-hero-image" [src]="recipeImage()" alt="Recipe dish" />
+            }
+          </aside>
+        </div>
+      </div>
+    }
+  </div>
+</main>

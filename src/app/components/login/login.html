@@ -1,0 +1,134 @@
+<main class="app-content feature-page login-page">
+  @if (auth.isAuthenticated() && auth.user()) {
+    <div class="login-form-panel">
+      <h2>Signed in</h2>
+      <p class="hint">
+        {{ loginParts.prefix }}<strong>{{ loginParts.email }}</strong>{{ loginParts.role }}.
+      </p>
+      <p class="hint">
+        Full access: Chat, YouTube, Recipes, Jokes, Images, RAG, and About.
+      </p>
+      <div class="feature-form stacked">
+        <button type="button" class="secondary-button" (click)="router.navigateByUrl('/')">Continue to Chat</button>
+        <button type="button" class="clear-chat-button" (click)="signOut()">Sign out</button>
+      </div>
+    </div>
+  } @else if (auth.isGuest() && !guestUpgrading()) {
+    <div class="login-form-panel">
+      <h2>Guest mode</h2>
+      <p class="hint">
+        You have limited access: <strong>Chat</strong>, <strong>Images</strong>, <strong>RAG</strong>,
+        and <strong>About</strong>. Sign in for full access.
+      </p>
+      <div class="feature-form stacked">
+        <button type="button" class="secondary-button" (click)="router.navigateByUrl('/')">Continue to Chat</button>
+        <button type="button" class="secondary-button" (click)="guestUpgrading.set(true); step.set('chooser'); error.set('')">
+          Sign in for full access
+        </button>
+        <button type="button" class="clear-chat-button" (click)="signOut()">Exit guest</button>
+      </div>
+    </div>
+  } @else {
+    @if (step() === 'chooser' && !oauthBusy()) {
+      <div class="confirm-modal-container login-method-modal-overlay" role="dialog" aria-modal="true">
+        <div class="confirm-modal-content login-method-modal">
+          <div class="confirm-modal-header">
+            <h3 id="login-method-title">How do you want to sign in?</h3>
+            @if (auth.isGuest()) {
+              <app-modal-close-button (close)="guestUpgrading.set(false); step.set('chooser')" />
+            }
+          </div>
+          <div class="confirm-modal-body login-method-body">
+            <p class="login-method-lead">
+              Sign in for full access, or continue as Guest for Chat, Images, and About.
+            </p>
+            <div class="login-method-choices">
+              <button type="button" class="login-method-choice" (click)="error.set(''); step.set('jwt')">
+                <span class="login-method-choice-title">Email &amp; password</span>
+                <span class="login-method-choice-desc">JWT login — full access with your Multichat account.</span>
+              </button>
+              <button type="button" class="login-method-choice login-method-choice-social" (click)="googleLogin()">
+                <span class="login-method-choice-title">Sign in with Google</span>
+                <span class="login-method-choice-desc">Use your Google account for full access.</span>
+              </button>
+              <button type="button" class="login-method-choice login-method-choice-guest" (click)="continueAsGuest()">
+                <span class="login-method-choice-title">Login as Guest</span>
+                <span class="login-method-choice-desc">Limited access: Chat, Images, and About only.</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    @if (oauthBusy()) {
+      <div class="login-form-panel">
+        <h2>Signing in…</h2>
+        <p class="hint">Finishing Google sign-in.</p>
+      </div>
+    }
+
+    @if (!oauthBusy() && step() === 'chooser') {
+      <div class="login-form-panel">
+        <h2>Welcome</h2>
+        <p class="hint">Choose a sign-in method to continue. Guest access is limited to Chat, Images, and About.</p>
+      </div>
+    }
+
+    @if (step() === 'social' && !oauthBusy()) {
+      <div class="login-form-panel">
+        <h2>Sign-in issue</h2>
+        @if (error()) {
+          <p class="chat-error">{{ error() }}</p>
+        } @else {
+          <p class="hint">Social sign-in did not complete.</p>
+        }
+        <div class="feature-form stacked">
+          <button type="button" class="secondary-button" (click)="error.set(''); step.set('chooser')">
+            ← Try another sign-in method
+          </button>
+          <button type="button" class="secondary-button" (click)="googleLogin()">
+            Retry Google sign-in
+          </button>
+        </div>
+      </div>
+    }
+
+    @if (step() === 'jwt' && !oauthBusy()) {
+      <div class="login-form-panel">
+        <h2>{{ mode() === 'register' ? 'Create account' : 'Sign in' }}</h2>
+        <p class="hint">JWT path — email and password for full Multichat access.</p>
+        <form class="feature-form stacked" (ngSubmit)="submit()">
+          <label class="login-field">
+            <span class="login-field-label">Email</span>
+            <input name="email" type="email" [(ngModel)]="email" placeholder="Email" required />
+          </label>
+          <label class="login-field">
+            <span class="login-field-label">Password</span>
+            <input name="password" type="password" [(ngModel)]="password" placeholder="Password" required minlength="6" />
+          </label>
+          <button type="submit" [disabled]="loading()">
+            {{ loading() ? (mode() === 'register' ? 'Creating…' : 'Signing in…') : (mode() === 'register' ? 'Create account' : 'Sign in') }}
+          </button>
+        </form>
+        @if (error()) {
+          <p class="chat-error">{{ error() }}</p>
+        }
+        <p class="hint">
+          @if (mode() === 'register') {
+            Already have an account?
+            <button type="button" class="linkish-button" (click)="mode.set('login'); error.set('')">Sign in</button>
+          } @else {
+            New here?
+            <button type="button" class="linkish-button" (click)="mode.set('register'); error.set('')">Create an account</button>
+          }
+        </p>
+        <p class="hint">
+          <button type="button" class="linkish-button" (click)="error.set(''); step.set('chooser')">
+            ← Choose a different sign-in method
+          </button>
+        </p>
+      </div>
+    }
+  }
+</main>

@@ -1,0 +1,40 @@
+@if (open() && content) {
+  <div class="help-modal-container" role="dialog" aria-modal="true" aria-labelledby="help-modal-title">
+    <div class="help-modal-content">
+      <div class="help-modal-header">
+        <h3 id="help-modal-title">{{ content.title }}</h3>
+        <app-modal-close-button (close)="closed.emit()" />
+      </div>
+      <div class="help-modal-body">
+        <p class="help-modal-intro">{{ content.intro }}</p>
+        @for (section of content.sections; track section.heading) {
+          <section class="help-modal-section">
+            <h4>{{ section.heading }}</h4>
+            <ul>
+              @for (item of section.items; track item) {
+                <li>{{ item }}</li>
+              }
+            </ul>
+          </section>
+        }
+        <section class="help-modal-section help-modal-limits">
+          <h4>Limits</h4>
+          @if (loading && limitLines.length === 0) {
+            <p class="hint">Loading current limits…</p>
+          } @else if (error && limitLines.length === 0) {
+            <p class="hint">Current limits are unavailable right now.</p>
+          } @else {
+            <ul>
+              @for (line of limitLines; track line) {
+                <li>{{ line }}</li>
+              }
+            </ul>
+          }
+        </section>
+      </div>
+      <div class="help-modal-actions">
+        <button type="button" class="help-modal-btn" (click)="closed.emit()">Got it</button>
+      </div>
+    </div>
+  </div>
+}

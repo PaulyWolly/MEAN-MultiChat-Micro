@@ -1,0 +1,23 @@
+@if (toast.toasts().length) {
+  <div class="app-toast-stack" aria-live="polite" aria-relevant="additions">
+    @for (item of toast.toasts(); track item.id) {
+      <div
+        class="app-toast"
+        [class.app-toast--info]="item.tone === 'info'"
+        [class.app-toast--success]="item.tone === 'success'"
+        [class.app-toast--error]="item.tone === 'error'"
+        [attr.role]="item.tone === 'error' ? 'alert' : 'status'"
+      >
+        <p class="app-toast-message">{{ item.message }}</p>
+        <button
+          type="button"
+          class="app-toast-dismiss"
+          aria-label="Dismiss notification"
+          (click)="toast.dismiss(item.id)"
+        >
+          ×
+        </button>
+      </div>
+    }
+  </div>
+}

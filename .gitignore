@@ -1,0 +1,42 @@
+# Compiled output
+/dist
+/tmp
+/out-tsc
+/.angular/cache
+
+# Node
+node_modules
+npm-debug.log*
+
+# Environment variables — never commit API keys
+.env
+.env.*
+!.env.example
+
+# Logs
+logs
+*.log
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+.idea
+.DS_Store
+
+# Local/runtime data
+backend/server/uploads/
+backend/server/data/
+backend/server/quota-*.json
+backend/services/media-service/quota-*.json
+
+# Angular CLI temp scaffold (safe to delete)
+.tmp-ng/
+
+# Reference copy of the React MERN app — local only
+MERN-MultiChat-REFERENCE/
+
+# Local archives
+*.zip

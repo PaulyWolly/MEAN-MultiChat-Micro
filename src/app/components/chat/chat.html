@@ -1,0 +1,260 @@
+<main class="app-content chat-page">
+  @if (messages().length === 0 && !loading()) {
+    <div class="message-list empty">
+      <p>Start a conversation: type a message, or click the <span class="conversation-mode-checkbox">Conversation Mode</span> checkbox.</p>
+      <p class="hint">
+        Conversation Mode uses the mic. Chat uses OpenAI by default (cheaper for production).
+        Signed-in chats save to <strong>History</strong>. Say <strong>exit</strong> to end a
+        conversation. Ask for <strong>images</strong> or <strong>pictures</strong> to see a photo
+        grid with the reply.
+        <br /><br />
+        Please make sure your
+        <a href="ms-settings:sound" class="mic-settings-link" (click)="openMicSettings($event)">
+          Microphone Volume Setting
+        </a>
+        is at or above 50%.
+      </p>
+    </div>
+  } @else {
+    <div class="message-list" #messageList aria-live="polite">
+      @for (message of messages(); track message.id) {
+        <div class="message-row" [class.user]="message.role === 'user'" [class.assistant]="message.role !== 'user'">
+          <div class="message-bubble" [class.user]="message.role === 'user'" [class.assistant]="message.role !== 'user'">
+            @if (message.image) {
+              <button
+                type="button"
+                class="message-attachment"
+                title="Attached image"
+                (click)="openImageDetail([{ url: message.image, thumb: message.image, title: message.imageName }], 0)"
+              >
+                <img [src]="message.image" [alt]="message.imageName || 'Attached image'" />
+              </button>
+            }
+            <div [innerHTML]="message.content | markdown"></div>
+            @if (message.role === 'assistant' && message.usedWebSearch) {
+              <span class="web-badge">Web</span>
+            }
+            @if (message.role === 'assistant' && message.images?.length) {
+              <div class="chat-image-block">
+                <div class="chat-image-toolbar">
+                  <span class="chat-image-count">{{ message.images!.length }} images</span>
+                  @if (message.imageSubject && !message.imagesExhausted) {
+                    <button
+                      type="button"
+                      class="chat-image-more-btn"
+                      (click)="loadMoreImages(message.id)"
+                      [disabled]="loadingMoreImagesId() === message.id"
+                    >
+                      {{ loadingMoreImagesId() === message.id ? 'Loading…' : 'More images' }}
+                    </button>
+                  }
+                </div>
+                <div class="chat-image-grid" role="list">
+                  @for (img of message.images; track $index) {
+                    <app-chat-image-thumb
+                      [img]="img"
+                      [index]="$index"
+                      (opened)="openImageDetail(message.images!, $index)"
+                    />
+                  }
+                </div>
+              </div>
+            }
+            @if (message.role === 'assistant' && message.imagesError) {
+              <p class="hint chat-images-error">{{ message.imagesError }}</p>
+            }
+          </div>
+        </div>
+      }
+      @if (loading()) {
+        <div class="message-row assistant">
+          <div class="message-bubble assistant loading">
+            <span class="hint">Thinking…</span>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  @if (error()) {
+    <p class="chat-error page-chrome">{{ error() }}</p>
+  }
+</main>
+
+<div class="app-footer">
+  <div class="chat-input-area">
+    <div class="conversation-row">
+      <label class="conversation-checkbox" for="conversation-mode">
+        <span>Conversation Mode</span>
+        <input
+          id="conversation-mode"
+          type="checkbox"
+          class="conversation-mode-checkbox"
+          [checked]="conversationMode"
+          [disabled]="youtubeAudioLocked()"
+          (change)="onConversationMode($event)"
+        />
+      </label>
+      <app-help-button topic="chat" />
+
+      @if (conversationMode && micWarming && !showAudioControls) {
+        <span class="mic-live-badge mic-live-badge--warmup" aria-live="polite">Getting ready…</span>
+      }
+      @if (showListening) {
+        <span class="mic-live-badge" aria-live="polite">Listening...</span>
+      }
+      @if (showMicOff) {
+        <span class="mic-live-badge mic-live-badge--warmup" aria-live="polite">Mic off</span>
+      }
+      @if (showAudioControls) {
+        <span class="mic-live-badge mic-live-badge--speaking" aria-live="polite">
+          {{ isAudioPaused() ? 'Paused…' : 'Responding...' }}
+        </span>
+      }
+
+      @if (showMicLevel) {
+        <span
+          class="mic-input-level"
+          [title]="micLevelLow ? 'Input is quiet — raise Windows mic volume or move closer' : 'Microphone input level'"
+          [attr.aria-label]="'Microphone input level ' + micLevel + ' percent'"
+        >
+          <span class="mic-input-level__track">
+            <span
+              class="mic-input-level__fill"
+              [class.mic-input-level__fill--low]="micLevelLow"
+              [style.width.%]="micLevel > 2 ? micLevel : 2"
+            ></span>
+          </span>
+        </span>
+      }
+
+      @if (showAudioControls) {
+        <div class="audio-control-buttons">
+          <button
+            type="button"
+            class="pause-audio-button"
+            [class.is-paused]="isAudioPaused()"
+            [class.is-active]="!isAudioPaused()"
+            (click)="togglePauseAudio()"
+            [title]="isAudioPaused() ? 'Resume spoken reply' : 'Pause spoken reply'"
+          >
+            {{ isAudioPaused() ? 'Resume audio' : 'Pause audio' }}
+          </button>
+          <button
+            type="button"
+            class="stop-audio-button is-active"
+            (click)="stopAudio()"
+            title="Stop spoken reply"
+          >
+            Stop audio
+          </button>
+        </div>
+      }
+
+      @if (statusToShow) {
+        <p class="status-line" [title]="statusToShow" aria-live="polite">{{ statusToShow }}</p>
+      }
+    </div>
+
+    @if (micError) {
+      <p class="chat-error">{{ micError }}</p>
+    }
+
+    @if (attachment) {
+      <div class="chat-attachment-bar">
+        <img [src]="attachment.dataUrl" alt="" class="chat-attachment-thumb" />
+        <span class="chat-attachment-name">{{ attachment.fileName }}</span>
+        <span class="chat-attachment-hint">Ask about this image, or press Send.</span>
+        <button
+          type="button"
+          class="chat-attachment-remove"
+          (click)="removeAttachment()"
+          title="Remove image"
+          aria-label="Remove attached image"
+        >
+          ×
+        </button>
+      </div>
+    }
+    @if (attachError()) {
+      <p class="chat-error">{{ attachError() }}</p>
+    }
+
+    <form class="chat-input-form" (submit)="onSubmit($event)">
+      <input
+        #attachInput
+        type="file"
+        accept="image/*"
+        class="chat-attach-file-input"
+        aria-label="Attach an image"
+        tabindex="-1"
+        (change)="onAttachChange($event)"
+      />
+
+      <app-clearable-input
+        class="chat-input-clearable"
+        extraClass="chat-input"
+        [hasLeading]="true"
+        [placeholder]="inputPlaceholder"
+        ariaLabel="Chat message"
+        [(value)]="draft"
+        [disabled]="loading()"
+      >
+        <button
+          data-leading
+          type="button"
+          class="chat-attach-button"
+          [class.has-image]="!!attachment"
+          [disabled]="loading()"
+          title="Attach an image for the AI to look at"
+          aria-label="Attach an image for the AI to look at"
+          (click)="attachInput.click()"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path
+              d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M12 16V3m0 0 4.5 4.5M12 3 7.5 7.5"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </button>
+      </app-clearable-input>
+
+      <button type="submit" class="send-button" [disabled]="loading() || speaking() || (!draft.trim() && !attachment)">
+        Send
+      </button>
+      <button
+        type="button"
+        class="chat-history-btn"
+        (click)="openHistory()"
+        aria-haspopup="dialog"
+        title="Open conversation history"
+      >
+        History
+      </button>
+      <button type="button" class="clear-chat-button" (click)="clearChat()">Clear Chat</button>
+    </form>
+  </div>
+</div>
+
+<app-chat-history-modal
+  [open]="historyOpen()"
+  [items]="historyItems()"
+  [activeId]="activeConversationId"
+  [loadError]="historyError()"
+  (closed)="historyOpen.set(false)"
+  (selected)="onSelectHistory($event)"
+  (refreshed)="loadHistoryList()"
+  (deleteRequested)="onDeleteHistory($event)"
+/>
+
+@if (detailGallery(); as gallery) {
+  <app-chat-image-detail-modal
+    [images]="gallery.images"
+    [initialIndex]="gallery.index"
+    (closed)="closeImageDetail()"
+  />
+}

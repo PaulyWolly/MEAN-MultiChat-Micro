@@ -1,0 +1,30 @@
+{
+  "watch": [
+    "server.js",
+    "routes",
+    "services",
+    "middleware",
+    "models",
+    "utils",
+    "lib",
+    "config"
+  ],
+  "ext": "js,mjs,cjs",
+  "ignore": [
+    "node_modules/**",
+    "quota-tracking.json",
+    "**/*.log",
+    "**/*-out.txt",
+    "**/_*.txt",
+    "public/**",
+    "scripts/**",
+    "BACKUP*/**",
+    "tmp/**",
+    "uploads/**",
+    "logs/**",
+    "../../logs/**"
+  ],
+  "delay": "2000",
+  "signal": "SIGTERM",
+  "legacyWatch": true
+}

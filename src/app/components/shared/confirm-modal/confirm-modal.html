@@ -1,0 +1,41 @@
+@if (open()) {
+  <div
+    class="confirm-modal-container"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="confirm-modal-title"
+  >
+    <div class="confirm-modal-content">
+      <div class="confirm-modal-header">
+        <h3 id="confirm-modal-title">{{ title() }}</h3>
+        <app-modal-close-button (close)="cancelled.emit()" />
+      </div>
+      <div class="confirm-modal-body">
+        <p id="confirm-modal-message">{{ message() }}</p>
+        @if (countdown()) {
+          <p class="confirm-modal-countdown" aria-live="polite">{{ countdown() }}</p>
+        }
+      </div>
+      <div class="confirm-modal-actions">
+        <button
+          type="button"
+          class="confirm-modal-btn"
+          [class.confirm-modal-btn-accent]="confirmVariant() === 'accent'"
+          [class.confirm-modal-btn-primary]="confirmVariant() !== 'accent'"
+          (click)="confirmed.emit()"
+        >
+          {{ confirmText() }}
+        </button>
+        @if (cancelText()) {
+          <button
+            type="button"
+            class="confirm-modal-btn confirm-modal-btn-secondary"
+            (click)="cancelled.emit()"
+          >
+            {{ cancelText() }}
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+}

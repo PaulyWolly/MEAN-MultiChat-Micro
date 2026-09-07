@@ -1,0 +1,81 @@
+.users-demo-page {
+  overflow: hidden;
+}
+
+.users-demo-panel {
+  flex: 1;
+  min-height: 0;
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 8px 6px 10px;
+  box-sizing: border-box;
+}
+
+.users-demo-header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.users-demo-header h2 {
+  margin: 0 0 6px;
+  font-size: 1.35rem;
+}
+
+.users-demo-eyebrow {
+  margin: 0 0 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 11px;
+}
+
+.users-demo-loading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 24px 0;
+  color: var(--text);
+}
+
+.users-demo-table-wrap {
+  flex: 1;
+  min-height: 0;
+}
+
+.users-demo-table {
+  width: 100%;
+  font-family: var(--sans);
+  font-size: 12px;
+}
+
+.users-demo-table .mat-mdc-header-cell,
+.users-demo-table .mat-mdc-cell,
+.users-demo-table .mat-mdc-header-cell *,
+.users-demo-table .mat-mdc-cell * {
+  font-family: var(--sans) !important;
+  font-size: 12px !important;
+  line-height: 1.3 !important;
+}
+
+.users-demo-table .mat-mdc-header-cell {
+  font-weight: 600 !important;
+  padding: 8px 10px !important;
+  white-space: nowrap;
+}
+
+.users-demo-table .mat-mdc-cell {
+  padding: 6px 10px !important;
+  white-space: nowrap;
+}
+
+.users-demo-count {
+  flex-shrink: 0;
+  margin: 0;
+  font-size: 12px;
+}

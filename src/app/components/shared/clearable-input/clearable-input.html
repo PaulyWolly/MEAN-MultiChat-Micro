@@ -1,0 +1,41 @@
+<div
+  class="clearable-input"
+  [class.clearable-input--multiline]="multiline()"
+  [class.clearable-input--has-leading]="hasLeading()"
+>
+  <ng-content select="[data-leading]" />
+  @if (multiline()) {
+    <textarea
+      [class]="extraClass()"
+      [rows]="rows()"
+      [placeholder]="placeholder()"
+      [attr.id]="inputId() || null"
+      [attr.aria-label]="ariaLabel() || null"
+      [disabled]="disabled()"
+      [value]="value()"
+      (input)="onInput($event)"
+    ></textarea>
+  } @else {
+    <input
+      [class]="extraClass()"
+      [type]="inputType()"
+      [placeholder]="placeholder()"
+      [attr.id]="inputId() || null"
+      [attr.aria-label]="ariaLabel() || null"
+      [disabled]="disabled()"
+      [value]="value()"
+      (input)="onInput($event)"
+    />
+  }
+  @if (value()) {
+    <button
+      type="button"
+      class="clearable-input-clear"
+      (click)="clear($event)"
+      aria-label="Clear input"
+      title="Clear input"
+    >
+      ×
+    </button>
+  }
+</div>

@@ -1,0 +1,47 @@
+@if (open() && answer()) {
+  <div
+    class="rag-answer-modal-container"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="rag-answer-modal-title"
+    (click)="closeFromBackdrop()"
+  >
+    <div class="rag-answer-modal-content" (click)="stop($event)">
+      <div class="rag-answer-modal-header no-print">
+        <h3 id="rag-answer-modal-title">Answer</h3>
+        <app-modal-close-button (close)="closed.emit()" />
+      </div>
+
+      <div class="rag-answer-modal-body rag-answer-print">
+        @if (question()) {
+          <p class="rag-answer-modal-question">
+            <strong>Question:</strong> {{ question() }}
+          </p>
+        }
+        <div class="rag-answer-modal-text">{{ answer() }}</div>
+        @if (sources().length) {
+          <div class="rag-answer-modal-sources">
+            <h4>Sources</h4>
+            <ul>
+              @for (src of sources(); track $index) {
+                <li>
+                  <strong>{{ src.label || 'Source ' + ($index + 1) }} — {{ src.filename }}</strong>
+                  @if (src.snippet) {
+                    <p>{{ src.snippet }}</p>
+                  }
+                </li>
+              }
+            </ul>
+          </div>
+        }
+      </div>
+
+      <div class="rag-answer-modal-actions no-print">
+        <button type="button" class="secondary-button" (click)="print()">Print</button>
+        <button type="button" class="confirm-modal-btn confirm-modal-btn-accent" (click)="closed.emit()">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+}

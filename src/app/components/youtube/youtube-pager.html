@@ -1,0 +1,51 @@
+<div class="youtube-pager {{ extraClass() }}">
+  <button
+    type="button"
+    class="icon-action-button youtube-pager-btn"
+    (click)="first.emit()"
+    [disabled]="loading() || !canFirst()"
+    title="Go to first page"
+    aria-label="Go to first page"
+  >
+    <svg class="icon-btn-svg" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+      <path fill="currentColor" d="M18.41 16.59 13.82 12l4.59-4.59L17 6l-6 6 6 6zM6 6h2v12H6z" />
+    </svg>
+  </button>
+  <button
+    type="button"
+    class="icon-action-button youtube-pager-btn"
+    (click)="prev.emit()"
+    [disabled]="loading() || !canPrev()"
+    title="Previous page"
+    aria-label="Previous page"
+  >
+    <svg class="icon-btn-svg" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+      <path fill="currentColor" d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z" />
+    </svg>
+  </button>
+  <span class="pager-label">Page {{ page() }}</span>
+  <button
+    type="button"
+    class="icon-action-button youtube-pager-btn youtube-pager-next"
+    (click)="next.emit()"
+    [disabled]="loading() || !canNext()"
+    title="Next page"
+    aria-label="Next page"
+  >
+    <svg class="icon-btn-svg" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+      <path fill="currentColor" d="M10 6 8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" />
+    </svg>
+  </button>
+  <button
+    type="button"
+    class="icon-action-button youtube-pager-btn"
+    (click)="last.emit()"
+    [disabled]="loading() || !canLast()"
+    title="Go to last page"
+    aria-label="Go to last page"
+  >
+    <svg class="icon-btn-svg" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+      <path fill="currentColor" d="M5.59 7.41 10.18 12l-4.59 4.59L7 18l6-6-6-6zM16 6h2v12h-2z" />
+    </svg>
+  </button>
+</div>

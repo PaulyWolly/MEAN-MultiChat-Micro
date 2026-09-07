@@ -1,0 +1,13 @@
+{
+  "files.exclude": {
+    "**/.tmp-ng": true
+  },
+  "search.exclude": {
+    "**/.tmp-ng": true,
+    "**/.angular/cache": true
+  },
+  "files.watcherExclude": {
+    "**/.tmp-ng/**": true,
+    "**/.angular/cache/**": true
+  }
+}

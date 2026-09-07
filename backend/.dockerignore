@@ -1,0 +1,32 @@
+# Secrets — inject at runtime with --env-file or cloud env vars
+**/.env
+**/.env.*
+!**/.env.example
+
+# Dependencies are installed inside the image
+**/node_modules
+
+# Runtime / local junk
+logs
+**/*.log
+cache
+uploads
+**/uploads
+server/data
+server/data-bkup
+server/backups
+server/quota-*.json
+server/quota-real-status.json
+
+# Docs and git
+.git
+.gitignore
+**/.DS_Store
+**/*.md
+!server/README.md
+
+# Archives and backups
+**/*.zip
+**/*backup*.json
+**/*.backup*
+**/*.srt

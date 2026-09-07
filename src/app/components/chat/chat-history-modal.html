@@ -1,0 +1,71 @@
+@if (open()) {
+  <div class="youtube-history-modal-backdrop" role="presentation">
+    <div
+      class="youtube-history-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="chat-history-title"
+    >
+      <header class="youtube-history-modal-header">
+        <h3 id="chat-history-title">Conversation History</h3>
+        <div class="youtube-history-modal-actions">
+          <button type="button" class="secondary-button" (click)="refreshed.emit()" title="Refresh conversations">
+            Refresh
+          </button>
+          <app-modal-close-button (close)="closed.emit()" />
+        </div>
+      </header>
+
+      <p class="youtube-history-modal-hint">Conversations saved in MongoDB. Click a row to reopen it.</p>
+
+      <div class="youtube-history-toolbar">
+        <app-clearable-input
+          extraClass="youtube-history-search-input"
+          placeholder="Search conversations…"
+          ariaLabel="Filter conversations"
+          [value]="filter()"
+          (valueChange)="filter.set($event)"
+        />
+      </div>
+
+      @if (loadError()) {
+        <p class="youtube-history-empty">{{ loadError() }}</p>
+      } @else if (items().length === 0) {
+        <p class="youtube-history-empty">No saved conversations yet.</p>
+      } @else if (filtered().length === 0) {
+        <p class="youtube-history-empty">No conversations match “{{ filter().trim() }}”.</p>
+      } @else {
+        <ul class="youtube-history-modal-list">
+          @for (item of filtered(); track item._id) {
+            <li class="youtube-history-modal-item" [class.is-active]="isActive(item)">
+              <button type="button" class="youtube-history-select" (click)="selected.emit(item)">
+                <span class="history-query">{{ item.title || 'Conversation' }}</span>
+                <span class="history-meta">
+                  {{ item.messageCount || 0 }}
+                  message{{ (item.messageCount || 0) === 1 ? '' : 's' }}
+                  @if (preview(item)) {
+                    · {{ preview(item) }}{{ preview(item).length >= 90 ? '…' : '' }}
+                  }
+                  @if (formatWhen(item.updatedAt || item.createdAt)) {
+                    · <strong>{{ formatWhen(item.updatedAt || item.createdAt) }}</strong>
+                  }
+                </span>
+              </button>
+              <div class="youtube-history-row-actions">
+                <button
+                  type="button"
+                  class="youtube-history-delete-icon"
+                  title="Permanently delete this conversation from MongoDB"
+                  [attr.aria-label]="'Delete ' + (item.title || 'conversation')"
+                  (click)="deleteRequested.emit(item)"
+                >
+                  🗑
+                </button>
+              </div>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+  </div>
+}

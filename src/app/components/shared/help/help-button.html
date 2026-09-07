@@ -1,0 +1,10 @@
+<button
+  type="button"
+  class="help-button"
+  (click)="open.set(true)"
+  [attr.aria-label]="'Help with ' + label"
+  [title]="'Help with ' + label"
+>
+  <span aria-hidden="true">?</span>
+</button>
+<app-help-modal [open]="open()" [topic]="topic()" (closed)="open.set(false)" />

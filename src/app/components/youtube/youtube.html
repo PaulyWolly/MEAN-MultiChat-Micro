@@ -1,0 +1,162 @@
+<main class="app-content feature-page youtube-page">
+  <div class="page-chrome">
+    <div class="youtube-toolbar">
+      <form class="feature-form youtube-search-form" (submit)="onSubmit($event)">
+        <app-voice-mic-button (transcript)="onVoice($event)" (failed)="toast.show($event, 'error')" [disabled]="loading() || !!player()" />
+        <app-clearable-input [value]="query()" (valueChange)="query.set($event)" placeholder="Search YouTube… or use Mic" ariaLabel="YouTube search" />
+        <app-search-icon-button [loading]="loading()" [disabled]="loading()" />
+        <button
+          type="button"
+          class="secondary-button youtube-toolbar-btn"
+          (click)="handleSave()"
+          [disabled]="saving() || (!videos().length && !activeQuery()) || currentSaved()"
+          [title]="currentSaved() ? 'This search is already saved in MongoDB' : 'Save this search to MongoDB History'"
+        >
+          {{ saving() ? '…' : currentSaved() ? 'Saved' : 'Save' }}
+        </button>
+        <button
+          type="button"
+          class="secondary-button youtube-toolbar-btn youtube-toolbar-btn--history"
+          (click)="openHistory()"
+          aria-haspopup="dialog"
+          title="Open search history"
+        >
+          History
+        </button>
+      </form>
+      <button
+        type="button"
+        class="secondary-button youtube-toolbar-btn youtube-toolbar-btn--playlists"
+        (click)="openPlaylists(null)"
+        aria-haspopup="dialog"
+        title="Open playlist manager"
+      >
+        Playlists
+      </button>
+    </div>
+    <p class="hint youtube-intro-hint">
+      Search or use <strong>Mic</strong>. Click a thumbnail to play here —
+      <strong>Save</strong>, <strong>History</strong>, and <strong>Playlists</strong> keep searches and favorites organized.
+    </p>
+
+    @if (activeQuery() && videos().length > 0) {
+      <div class="youtube-results-header">
+        <div class="youtube-results-heading">
+          <h3>
+            Results for “{{ resultsLabel() }}” · Page {{ page() }}{{ pageLabel() }}
+            @if (cacheStatusLabel()) {
+              <span class="youtube-results-status">({{ cacheStatusLabel() }})</span>
+            }
+          </h3>
+          <button
+            type="button"
+            class="youtube-led-btn"
+            [class.is-saved]="currentSaved()"
+            (click)="currentSaved() ? null : handleSave()"
+            [disabled]="saving() || currentSaved()"
+            [title]="currentSaved() ? 'Saved to MongoDB — green LED means this search is kept in History' : 'Not saved yet — click to save this search to MongoDB History (green LED)'"
+            [attr.aria-label]="currentSaved() ? 'Search is saved to MongoDB' : 'Search not saved — click to save to MongoDB'"
+          >
+            <span class="history-led" [class.saved]="currentSaved()" [class.unsaved]="!currentSaved()" aria-hidden="true"></span>
+          </button>
+        </div>
+        <app-youtube-pager
+          [page]="page()"
+          [loading]="loading()"
+          [canFirst]="canGoBack()"
+          [canPrev]="canGoBack()"
+          [canNext]="canGoNext()"
+          [canLast]="canGoLast()"
+          (first)="handleFirst()"
+          (prev)="handlePrev()"
+          (next)="handleNext()"
+          (last)="handleLast()"
+        />
+      </div>
+    }
+  </div>
+
+  <div class="page-scroll youtube-results-scroll">
+    @if (loading() && !videos().length) {
+      <p class="hint">Searching…</p>
+    }
+    <ul class="youtube-video-grid">
+      @for (video of visibleVideos(); track video.id || video.videoId) {
+        <app-youtube-video-card
+          [video]="video"
+          [alreadyFavorited]="alreadyFavorited(video)"
+          (play)="openVideoPlayer($event)"
+          (openChannel)="openChannelPlayer($event)"
+          (addToPlaylist)="handleAddToPlaylist($event)"
+          (thumbError)="hideVideo($event)"
+        />
+      }
+    </ul>
+  </div>
+</main>
+
+@if (player()) {
+  <div
+    class="youtube-player-overlay"
+    role="dialog"
+    [attr.aria-label]="player()?.kind === 'channel' ? 'Channel uploads player' : 'Video player'"
+  >
+    <div class="youtube-player-panel">
+      <div class="youtube-player-toolbar">
+        <a
+          class="youtube-open-external"
+          [href]="playerExternalHref()"
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Opens YouTube in a new browser tab"
+        >
+          Open on YouTube (new tab)
+        </a>
+        <app-modal-close-button (close)="player.set(null)" />
+      </div>
+      <div class="youtube-player">
+        @if (embedUrl()) {
+          <iframe
+            [src]="embedUrl()"
+            [title]="player()?.kind === 'channel' ? 'YouTube channel uploads' : 'YouTube player'"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen
+          ></iframe>
+        }
+      </div>
+    </div>
+  </div>
+}
+
+<app-youtube-history-modal
+  [open]="historyOpen()"
+  [items]="historyItems()"
+  [activeQuery]="activeQuery()"
+  [loadError]="historyLoadError()"
+  (closed)="historyOpen.set(false)"
+  (selected)="handleSavedClick($event)"
+  (refreshed)="loadSaved()"
+  (saveRequested)="handleHistorySave($event)"
+  (unsaveRequested)="handleUnsaveHistory($event)"
+  (deleteRequested)="requestDeleteHistory($event)"
+/>
+
+<app-playlist-manager-modal
+  [open]="playlistOpen()"
+  [pendingVideo]="pendingVideo()"
+  [contextQuery]="activeQuery() || query()"
+  (closed)="closePlaylists()"
+  (clearPending)="pendingVideo.set(null)"
+  (playVideo)="openVideoPlayer($event)"
+/>
+
+<app-confirm-modal
+  [open]="!!pendingHistoryDelete()"
+  title="Delete search history?"
+  [message]="'Permanently delete “' + pendingDeleteLabel() + '” from the history list, browser localStorage, and MongoDB? This cannot be undone.'"
+  confirmText="Delete"
+  cancelText="Cancel"
+  confirmVariant="danger"
+  (confirmed)="confirmDeleteHistory()"
+  (cancelled)="pendingHistoryDelete.set(null)"
+/>

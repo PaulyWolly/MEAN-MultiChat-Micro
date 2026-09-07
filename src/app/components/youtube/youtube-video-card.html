@@ -1,0 +1,52 @@
+@if (videoId()) {
+  @if (!alreadyFavorited()) {
+    <div class="youtube-card-actions">
+      <button
+        type="button"
+        class="add-to-playlist-btn"
+        title="Add to Playlist"
+        [attr.aria-label]="'Add ' + title() + ' to playlist'"
+        (click)="addToPlaylist.emit(video()); $event.stopPropagation()"
+      >
+        +
+      </button>
+    </div>
+  }
+
+  <button type="button" class="youtube-thumb-btn" (click)="play.emit(videoId())">
+    <span class="youtube-thumb-wrap">
+      <img
+        [src]="thumb()"
+        alt=""
+        loading="lazy"
+        referrerPolicy="no-referrer"
+        (error)="thumbError.emit(videoId())"
+      />
+      @if (duration()) {
+        <span class="youtube-duration">{{ duration() }}</span>
+      }
+    </span>
+    <span class="youtube-card-title">{{ title() }}</span>
+  </button>
+
+  @if (channel()) {
+    <button
+      type="button"
+      class="youtube-card-channel"
+      [title]="'Play ' + channel() + ' uploads in Multichat'"
+      (click)="openChannel.emit(video())"
+    >
+      {{ channel() }}
+    </button>
+  }
+
+  <a
+    class="youtube-watch-link"
+    [href]="'https://www.youtube.com/watch?v=' + videoId()"
+    target="_blank"
+    rel="noopener noreferrer"
+    title="Opens YouTube in a new browser tab"
+  >
+    Open on YouTube
+  </a>
+}

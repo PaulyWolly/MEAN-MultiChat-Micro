@@ -1,0 +1,21 @@
+{
+  "name": "mean-multichat-speech-service",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Phase 4 peel — Azure TTS + voices list",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "axios": "^1.7.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "express": "^4.21.1",
+    "node-fetch": "^2.7.0"
+  }
+}

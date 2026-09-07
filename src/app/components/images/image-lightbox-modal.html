@@ -1,0 +1,15 @@
+@if (open() && src()) {
+  <div
+    class="image-lightbox-backdrop"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Enlarged image"
+    (click)="closeFromBackdrop()"
+  >
+    <div (click)="stop($event)">
+      <app-modal-close-button className="image-lightbox-close" (close)="closed.emit()" />
+    </div>
+    <p class="image-lightbox-hint">Click outside the image or press Esc to close</p>
+    <img class="image-lightbox-img" [src]="src()" [alt]="alt()" (click)="stop($event)" />
+  </div>
+}

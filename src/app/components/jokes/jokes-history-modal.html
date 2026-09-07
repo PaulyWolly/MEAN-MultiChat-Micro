@@ -1,0 +1,90 @@
+@if (open()) {
+  <div class="youtube-history-modal-backdrop" role="presentation">
+    <div
+      class="youtube-history-modal jokes-history-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="jokes-history-title"
+    >
+      <header class="youtube-history-modal-header">
+        <h3 id="jokes-history-title">Joke History</h3>
+        <div class="youtube-history-modal-actions">
+          <button type="button" class="secondary-button" (click)="refreshed.emit()" title="Refresh jokes">
+            Refresh
+          </button>
+          <app-modal-close-button (close)="closed.emit()" />
+        </div>
+      </header>
+
+      <p class="youtube-history-modal-hint">
+        Jokes saved in MongoDB. Click a row to open it.
+      </p>
+
+      <div class="youtube-history-toolbar">
+        <app-clearable-input
+          extraClass="youtube-history-search-input"
+          placeholder="Search jokes…"
+          ariaLabel="Filter jokes"
+          [value]="filter()"
+          (valueChange)="filter.set($event)"
+        />
+        <div class="youtube-history-sort-icons" role="group" aria-label="Sort jokes">
+          <button
+            type="button"
+            class="youtube-history-sort-icon"
+            [class.is-active]="sortMode() === 'alpha'"
+            (click)="sortMode.set('alpha')"
+            title="Sort alphabetically"
+            aria-label="Sort alphabetically"
+            [attr.aria-pressed]="sortMode() === 'alpha'"
+          >
+            <svg class="icon-btn-svg" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+              <path
+                fill="currentColor"
+                d="M8 4h2l4.5 12h-2.1l-.9-2.5H6.5L5.6 16H3.5L8 4zm.7 7.5h2.6L10 7.2 8.7 11.5zM15 8h6v2h-4.2l4.2 6v2h-6v-2h4.2L15 10V8z"
+              />
+            </svg>
+          </button>
+          <button
+            type="button"
+            class="youtube-history-sort-icon"
+            [class.is-active]="sortMode() === 'recent'"
+            (click)="sortMode.set('recent')"
+            title="Sort by most recent"
+            aria-label="Sort by most recent"
+            [attr.aria-pressed]="sortMode() === 'recent'"
+          >
+            <svg class="icon-btn-svg" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+              <path
+                fill="currentColor"
+                d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8zm.75-12.5h-1.5v5.25l4.5 2.7.75-1.23-3.75-2.22z"
+              />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      @if (uniqueItems().length === 0) {
+        <p class="youtube-history-empty">No saved jokes yet.</p>
+      } @else if (filtered().length === 0) {
+        <p class="youtube-history-empty">No jokes match “{{ filter().trim() }}”.</p>
+      } @else {
+        <ul class="youtube-history-modal-list">
+          @for (joke of filtered(); track joke._id || joke.title) {
+            <li class="youtube-history-modal-item" [class.is-active]="isActive(joke)">
+              <button type="button" class="youtube-history-select" (click)="selected.emit(joke)">
+                <span class="history-query">{{ joke.title || 'Untitled joke' }}</span>
+                <span class="history-meta jokes-history-meta">
+                  <span class="jokes-history-preview">{{ preview(joke) }}</span>
+                  @if (formatWhen(joke.dateCreated); as when) {
+                    <span class="jokes-history-when">· <strong>{{ when }}</strong></span>
+                  }
+                </span>
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+  </div>
+}

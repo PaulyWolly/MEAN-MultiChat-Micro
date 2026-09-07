@@ -1,0 +1,284 @@
+<main class="app-content feature-page images-page">
+  <div class="page-chrome">
+    <div class="images-subtabs" role="tablist" aria-label="Images modes">
+      <button type="button" class="images-subtab" [class.is-active]="activeTab() === 'create'" (click)="setTab('create')">Create</button>
+      <button type="button" class="images-subtab" [class.is-active]="activeTab() === 'describe'" (click)="setTab('describe')">Describe</button>
+    </div>
+    <p class="hint images-intro-hint">
+      @if (activeTab() === 'create') {
+        Type a prompt and generate an image with OpenAI.
+      } @else {
+        Upload a photo and the AI will describe what it sees.
+      }
+      <app-help-button topic="images" />
+    </p>
+    @if (activeTab() === 'create') {
+      @if (imageUsage(); as usage) {
+        <p class="ai-usage-hint" [class.is-exhausted]="usage.remaining === 0">
+          {{ usage.remaining === 0
+            ? 'Daily image limit reached (' + usage.limit + '). Resets at 00:00 UTC.'
+            : usage.remaining + ' of ' + usage.limit + ' images left today.' }}
+        </p>
+      }
+    }
+    @if (activeTab() === 'create' && aiStatus.status() && !canGenerate()) {
+      <p class="ai-signin-notice">
+        <strong>Signing in is required to generate images.</strong>
+        @if (imageDailyLimit()) {
+          Accounts get {{ imageDailyLimit() }} per day.
+        }
+        A guest session has no account for the daily allowance to count against, so generation is unavailable. Describing an image you upload still works.
+        <a routerLink="/login">Sign in</a>
+      </p>
+    }
+
+    <div class="page-scroll images-page-scroll">
+    @if (activeTab() === 'create') {
+      <section class="image-generate-panel" aria-label="Create image">
+        <div class="image-generate-layout">
+          <div class="image-generate-controls">
+            <form class="image-generate-form" (submit)="$event.preventDefault(); generate()">
+              <app-clearable-input
+                [value]="genPrompt()"
+                (valueChange)="genPrompt.set($event)"
+                [multiline]="true"
+                [rows]="3"
+                [disabled]="generating()"
+                placeholder="Describe the image in as much detail as you like… (Enter to generate, Shift+Enter for a new line)"
+                ariaLabel="Image generation prompt"
+                (keydown)="onPromptKeyDown($event)"
+              />
+
+              <fieldset class="image-generate-presets" [disabled]="generating()">
+                <legend class="visually-hidden">Model</legend>
+                @for (p of presets; track p.id) {
+                  <label class="image-generate-preset">
+                    <input
+                      type="radio"
+                      name="image-preset"
+                      [value]="p.id"
+                      [checked]="genPreset() === p.id"
+                      (change)="genPreset.set(p.id)"
+                    />
+                    <span class="image-generate-preset__title">{{ p.title }}</span>
+                    <span class="image-generate-preset__detail">{{ p.detail }}</span>
+                  </label>
+                }
+              </fieldset>
+
+              <div class="image-generate-size-row" role="group" aria-label="Image size">
+                @for (s of sizes; track s.id) {
+                  <button
+                    type="button"
+                    class="secondary-button image-generate-size-btn"
+                    [class.is-active]="genSize() === s.id"
+                    [attr.aria-pressed]="genSize() === s.id"
+                    [disabled]="generating()"
+                    (click)="genSize.set(s.id)"
+                  >
+                    {{ s.label }}
+                  </button>
+                }
+              </div>
+
+              <div class="feature-form image-generate-actions">
+                <button
+                  type="submit"
+                  [disabled]="generating() || !genPrompt().trim() || !canGenerate()"
+                  [attr.title]="canGenerate() ? null : 'Sign in to generate images'"
+                >
+                  {{ generating() ? 'Generating…' : 'Generate' }}
+                </button>
+                <button
+                  type="button"
+                  class="secondary-button"
+                  (click)="clearGenerate()"
+                  [disabled]="generating() && !genImageUrl()"
+                >
+                  Clear
+                </button>
+              </div>
+
+              <button
+                type="button"
+                class="hint image-generate-example"
+                (click)="useExamplePrompt()"
+                [disabled]="generating()"
+                title="Click to use this example prompt"
+              >
+                <span class="image-generate-example__label">Example prompt:</span>
+                {{ examplePrompt }}
+              </button>
+
+              @if (genImageUrl()) {
+                <div class="image-generate-save">
+                  <label class="image-generate-save-label" for="image-save-name">Save as</label>
+                  <div class="image-generate-save-row">
+                    <app-clearable-input
+                      inputId="image-save-name"
+                      [value]="saveName()"
+                      (valueChange)="saveName.set($event)"
+                      placeholder="File name for download"
+                      ariaLabel="File name for download"
+                      [disabled]="generating()"
+                    />
+                    <span class="image-generate-save-ext" aria-hidden="true">.png</span>
+                    <a
+                      class="secondary-button image-generate-download"
+                      [href]="genImageUrl()"
+                      [attr.download]="downloadName()"
+                      [title]="'Download as ' + downloadName()"
+                    >
+                      Download
+                    </a>
+                  </div>
+                  <p class="hint image-generate-save-hint">
+                    Downloads as <strong>{{ downloadName() }}</strong>
+                  </p>
+                </div>
+              }
+            </form>
+
+            @if (genError()) {
+              <p class="chat-error">{{ genError() }}</p>
+            }
+          </div>
+
+          <div class="image-generate-result" aria-live="polite">
+            @if (generating() && !genImageUrl()) {
+              <p class="hint image-describe-result__pending">
+                Generating image… this can take a few seconds.
+              </p>
+            }
+            @if (genImageUrl()) {
+              <div class="image-viewer image-generate-preview">
+                <app-image-expandable-preview
+                  extraClass="image-generate-preview-frame"
+                  [src]="genImageUrl()"
+                  [alt]="genPrompt() || 'Generated image'"
+                  (enlarge)="lightboxOpen.set(true)"
+                />
+                @if (genMeta(); as meta) {
+                  <p class="hint image-generate-meta">
+                    {{ meta.model }}
+                    @if (meta.quality) {
+                      · {{ meta.quality }}
+                    }
+                    @if (meta.size) {
+                      · {{ meta.size }}
+                    }
+                    @if (meta.durationMs != null) {
+                      · {{ (meta.durationMs / 1000).toFixed(1) }}s
+                    }
+                  </p>
+                }
+              </div>
+            } @else if (!generating() && !genError()) {
+              <p class="hint image-describe-result__pending">
+                {{ canGenerate() ? 'Your generated image will appear here.' : 'Sign in to generate images.' }}
+              </p>
+            }
+          </div>
+        </div>
+      </section>
+    } @else {
+      <div class="image-describe-panel">
+        <input
+          #describeInput
+          type="file"
+          accept="image/*"
+          class="image-describe-file-input"
+          (change)="onFile($event)"
+          aria-label="Choose image to describe"
+        />
+
+        @if (!previewUrl()) {
+          <button type="button" class="image-describe-dropzone" (click)="describeInput.click()">
+            <span class="image-describe-dropzone__title">Choose an image</span>
+            <span class="image-describe-dropzone__hint">JPEG, PNG, WebP, or GIF — up to 10MB</span>
+          </button>
+          @if (describeError()) {
+            <p class="chat-error">{{ describeError() }}</p>
+          }
+        } @else {
+          <div class="image-describe-layout">
+            <div class="image-viewer image-describe-preview">
+              <app-image-expandable-preview
+                extraClass="image-describe-preview-frame"
+                [src]="previewUrl()"
+                [alt]="fileName() || 'Selected image'"
+                (enlarge)="lightboxOpen.set(true)"
+              />
+              @if (fileName()) {
+                <p class="image-describe-filename">{{ fileName() }}</p>
+              }
+              <div class="feature-form image-describe-actions">
+                <button class="image-describe-describe-btn" type="button" (click)="describe()" [disabled]="analyzing() || !previewUrl()">
+                  {{ analyzing() ? 'Describing…' : 'Describe with AI' }}
+                </button>
+                <div class="image-describe-secondary-actions">
+                  <button
+                    type="button"
+                    class="secondary-button image-describe-enlarge-btn"
+                    (click)="lightboxOpen.set(true)"
+                    title="Enlarge image"
+                  >
+                    <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                      <path
+                        fill="currentColor"
+                        d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"
+                      />
+                    </svg>
+                    Enlarge
+                  </button>
+                  <button type="button" class="secondary-button" (click)="clearDescribe()" [disabled]="analyzing()">
+                    Clear
+                  </button>
+                  <button type="button" class="secondary-button" (click)="describeInput.click()" [disabled]="analyzing()">
+                    Choose another
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="image-describe-result" aria-live="polite">
+              @if (describeError()) {
+                <p class="chat-error">{{ describeError() }}</p>
+              }
+              @if (analyzing() && !analysis()) {
+                <p class="hint image-describe-result__pending">Describing image…</p>
+              }
+              @if (analysis()) {
+                <div class="image-describe-result__toolbar">
+                  <button
+                    type="button"
+                    class="speak-toggle-button"
+                    [class.is-speaking]="speaking()"
+                    (click)="toggleSpeak()"
+                    [attr.aria-pressed]="speaking()"
+                    [title]="speaking() ? 'Stop reading' : 'Read description aloud'"
+                  >
+                    {{ speaking() ? 'Stop reading' : 'Read aloud' }}
+                  </button>
+                </div>
+                <div class="analysis-text">{{ analysis() }}</div>
+              } @else if (!analyzing() && !describeError()) {
+                <p class="hint image-describe-result__pending">
+                  Click “Describe with AI” to see and HEAR the description here.
+                </p>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    <app-image-lightbox-modal
+      [open]="lightboxOpen() && !!lightboxSrc()"
+      [src]="lightboxSrc()"
+      [alt]="lightboxAlt()"
+      (closed)="lightboxOpen.set(false)"
+    />
+    </div>
+  </div>
+</main>

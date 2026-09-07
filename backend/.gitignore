@@ -1,0 +1,20 @@
+# Runtime / local junk for the Express API
+node_modules
+server/node_modules
+
+# Local dev: config files not committed to git.
+.env
+.env.*
+!.env.example
+*.log
+
+# Local dev: server folders not committed to git.
+server/uploads/
+server/data/
+server/data-bkup/
+server/backups/
+server/WATCH_LATER/
+server/quota-*.json
+
+# Local dev: config files not committed to git.
+config/salron_history.json

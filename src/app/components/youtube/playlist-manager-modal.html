@@ -1,0 +1,205 @@
+@if (open()) {
+  <div class="playlist-manager-backdrop" role="presentation">
+    <div
+      class="playlist-manager-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="playlist-manager-title"
+    >
+      <header class="playlist-manager-header">
+        <h3 id="playlist-manager-title">Playlist Manager</h3>
+        <app-modal-close-button (close)="closed.emit()" />
+      </header>
+
+      <div class="playlist-manager-body">
+        <div class="playlist-controls-row">
+          <app-clearable-input
+            extraClass="playlist-search-input"
+            placeholder="Search/filter playlists…"
+            ariaLabel="Filter playlists"
+            [value]="filter()"
+            (valueChange)="filter.set($event)"
+          />
+          <form class="playlist-create-form" (submit)="handleCreate($event)">
+            <input
+              [value]="newName()"
+              (input)="newName.set($any($event.target).value)"
+              placeholder="New playlist name"
+              aria-label="New playlist name"
+            />
+            <button type="submit">Create Playlist</button>
+          </form>
+        </div>
+
+        <div class="playlist-manager-row">
+          <div class="playlists-pane">
+            <div class="playlists-container" aria-label="Playlists">
+              @if (loading()) {
+                <p class="hint">Loading playlists…</p>
+              }
+              @if (!loading() && filtered().length === 0) {
+                <p class="hint">
+                  @if (provisioning()) {
+                    Creating playlist from your video…
+                  } @else if (error()) {
+                    Could not load playlists.
+                  } @else if (pendingVideo()) {
+                    No matching playlist yet — one will be created; then drag the video onto it.
+                  } @else {
+                    No playlists yet — create one.
+                  }
+                </p>
+              }
+              @for (pl of filtered(); track pl._id) {
+                <div
+                  class="playlist-item"
+                  [class.active]="selectedId() === pl._id"
+                  [class.drag-over]="dragOverId() === pl._id"
+                  [class.is-suggested]="isSuggested(pl)"
+                  (click)="selectedId.set(pl._id)"
+                  (dragover)="onDragOver($event, pl._id)"
+                  (dragleave)="onDragLeave(pl._id)"
+                  (drop)="handleDrop($event, pl._id)"
+                >
+                  <span class="playlist-name">
+                    {{ visibleName(pl.name) }}
+                    @if (isSuggested(pl)) {
+                      <span class="playlist-suggested-tag">Match</span>
+                    }
+                  </span>
+                  <span class="playlist-count">({{ pl.videos?.length || 0 }})</span>
+                </div>
+              }
+            </div>
+            <div class="playlist-sort-bar" role="group" aria-label="Sort playlists">
+              <button
+                type="button"
+                class="playlist-sort-btn"
+                [class.is-active]="sortMode() === 'alpha'"
+                (click)="sortMode.set('alpha')"
+              >
+                Alphabetical
+              </button>
+              <button
+                type="button"
+                class="playlist-sort-btn"
+                [class.is-active]="sortMode() === 'recent'"
+                (click)="sortMode.set('recent')"
+              >
+                Most Recent
+              </button>
+            </div>
+          </div>
+
+          <div class="pending-video-container">
+            @if (pendingVideo(); as video) {
+              <div class="pending-video" draggable="true" (dragstart)="handleDragStart($event)">
+                <span class="drag-icon" aria-hidden="true">☰</span>
+                <img [src]="video.thumbnail" alt="" />
+                <div class="pending-video-meta">
+                  <strong>
+                    {{ (video.title || 'Untitled').slice(0, 48) }}{{ (video.title || '').length > 48 ? '…' : '' }}
+                  </strong>
+                  <span class="hint">
+                    {{ provisioning() ? 'Creating playlist…' : 'Drag onto a playlist on the left' }}
+                  </span>
+                </div>
+                @if (selectedId()) {
+                  <button type="button" class="secondary-button" (click)="addVideo(selectedId()!, video)">
+                    Add to selected
+                  </button>
+                }
+              </div>
+            } @else {
+              <div class="pending-placeholder">
+                Click <strong>+</strong> on a video thumbnail to stage it here, then drag onto a playlist.
+              </div>
+            }
+          </div>
+        </div>
+
+        @if (message() || error()) {
+          <p [class]="error() ? 'chat-error' : 'hint playlist-message'">{{ error() || message() }}</p>
+        }
+
+        @if (selected(); as sel) {
+          <div class="current-playlist-panel">
+            <div class="current-playlist-header">
+              <h4>{{ visibleName(sel.name) }}</h4>
+              <button type="button" class="youtube-history-delete" (click)="handleDeletePlaylist()">
+                Delete playlist
+              </button>
+            </div>
+            <ul class="playlist-videos-list">
+              @for (v of sel.videos || []; track v._id || v.videoId) {
+                <li class="playlist-video-row">
+                  <button
+                    type="button"
+                    class="playlist-video-play"
+                    title="Play in app player"
+                    (click)="playVideo.emit(v.videoId)"
+                  >
+                    <img [src]="v.thumbnail" alt="" />
+                    <div class="playlist-video-meta">
+                      <span class="playlist-video-title">{{ v.title }}</span>
+                      <span class="hint">
+                        {{ v.channelTitle || '' }}{{ v.duration ? ' · ' + formatDuration(v.duration) : '' }}
+                      </span>
+                      <span class="playlist-play-hint">Click to play in app</span>
+                    </div>
+                  </button>
+                  <a
+                    class="youtube-watch-link"
+                    [href]="'https://www.youtube.com/watch?v=' + v.videoId"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title="Opens YouTube in a new browser tab"
+                  >
+                    Open on YouTube
+                  </a>
+                  <label class="playlist-move-label">
+                    <span class="visually-hidden">Move to playlist</span>
+                    <select
+                      class="playlist-move-select"
+                      [disabled]="movingId() === v._id || !v._id || moveTargets().length === 0"
+                      [attr.aria-label]="'Move ' + (v.title || 'video') + ' to another playlist'"
+                      [title]="moveTargets().length === 0 ? 'Create another playlist to move videos' : 'Move to another playlist'"
+                      (change)="onMoveChange(v._id, $event)"
+                    >
+                      <option value="">{{ movingId() === v._id ? 'Moving…' : 'Move to…' }}</option>
+                      @for (pl of moveTargets(); track pl._id) {
+                        <option [value]="pl._id">{{ visibleName(pl.name) }}</option>
+                      }
+                    </select>
+                  </label>
+                  <button
+                    type="button"
+                    class="youtube-history-delete"
+                    (click)="requestRemoveVideo(v._id)"
+                    [disabled]="movingId() === v._id"
+                  >
+                    Remove
+                  </button>
+                </li>
+              }
+              @if (!(sel.videos || []).length) {
+                <li class="hint">No videos in this playlist yet.</li>
+              }
+            </ul>
+          </div>
+        }
+      </div>
+    </div>
+
+    <app-confirm-modal
+      [open]="!!pendingDelete()"
+      [title]="pendingDeleteTitle()"
+      [message]="pendingDeleteMessage()"
+      [confirmText]="pendingDelete()?.kind === 'playlist' ? 'Delete' : 'Remove'"
+      cancelText="Cancel"
+      confirmVariant="danger"
+      (confirmed)="confirmPendingDelete()"
+      (cancelled)="pendingDelete.set(null)"
+    />
+  </div>
+}

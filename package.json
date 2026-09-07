@@ -1,0 +1,77 @@
+{
+  "name": "mean-multichat-micro",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "ng": "ng",
+    "kill:dev": "node scripts/kill-dev.mjs",
+    "dev": "npm run kill:dev && concurrently -n server,client -c magenta,cyan \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:stable": "npm run kill:dev && concurrently -n server,client -c magenta,cyan \"npm run start:server\" \"npm run dev:client\"",
+    "dev:micro": "npm run kill:dev && concurrently -n gateway,auth,rag,images,chat,media,speech,jokes,recipes,profile,usage,platform,monolith,client -c yellow,red,green,blue,white,gray,orange,magenta,cyan,blueBright,greenBright,yellowBright,greenBright,magenta \"npm run start:gateway\" \"npm run start:auth\" \"npm run start:rag\" \"npm run start:images\" \"npm run start:chat\" \"npm run start:media\" \"npm run start:speech\" \"npm run start:jokes\" \"npm run start:recipes\" \"npm run start:profile\" \"npm run start:usage\" \"npm run start:platform\" \"npm run start:monolith\" \"npm run dev:client\"",
+    "dev:client": "ng serve --port 4200 --proxy-config proxy.conf.json",
+    "dev:server": "npm --prefix backend/server run dev",
+    "start:server": "npm --prefix backend/server start",
+    "start:gateway": "npm --prefix backend/services/gateway start",
+    "start:auth": "cross-env PORT=4801 npm --prefix backend/services/auth-service start",
+    "start:rag": "cross-env PORT=4802 npm --prefix backend/services/rag-service start",
+    "start:images": "cross-env PORT=4803 npm --prefix backend/services/images-service start",
+    "start:chat": "cross-env PORT=4804 npm --prefix backend/services/chat-service start",
+    "start:media": "cross-env PORT=4805 npm --prefix backend/services/media-service start",
+    "start:speech": "cross-env PORT=4806 npm --prefix backend/services/speech-service start",
+    "start:jokes": "cross-env PORT=4807 npm --prefix backend/services/jokes-service start",
+    "start:recipes": "cross-env PORT=4808 npm --prefix backend/services/recipes-service start",
+    "start:profile": "cross-env PORT=4809 npm --prefix backend/services/profile-service start",
+    "start:usage": "cross-env PORT=4811 npm --prefix backend/services/usage-service start",
+    "start:platform": "cross-env PORT=4812 npm --prefix backend/services/platform-service start",
+    "start:monolith": "cross-env PORT=4810 npm --prefix backend/server start",
+    "start": "ng serve",
+    "build": "ng build",
+    "docker:api:build": "docker build -t mean-multichat-api -f backend/Dockerfile backend",
+    "watch": "ng build --watch --configuration development",
+    "test": "ng test"
+  },
+  "prettier": {
+    "printWidth": 100,
+    "singleQuote": true,
+    "overrides": [
+      {
+        "files": "*.html",
+        "options": {
+          "parser": "angular"
+        }
+      }
+    ]
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "@angular/cdk": "^20.2.0",
+    "@angular/common": "^20.3.0",
+    "@angular/compiler": "^20.3.0",
+    "@angular/core": "^20.3.0",
+    "@angular/forms": "^20.3.0",
+    "@angular/material": "^20.2.0",
+    "@angular/platform-browser": "^20.3.0",
+    "@angular/router": "^20.3.0",
+    "concurrently": "^9.2.4",
+    "cross-env": "^7.0.3",
+    "marked": "^15.0.12",
+    "rxjs": "~7.8.0",
+    "tslib": "^2.3.0",
+    "zone.js": "~0.15.0"
+  },
+  "devDependencies": {
+    "@angular/build": "^20.3.34",
+    "@angular/cli": "^20.3.34",
+    "@angular/compiler-cli": "^20.3.0",
+    "@types/jasmine": "~5.1.0",
+    "jasmine-core": "~5.9.0",
+    "karma": "~6.4.0",
+    "karma-chrome-launcher": "~3.2.0",
+    "karma-coverage": "~2.2.0",
+    "karma-jasmine": "~5.1.0",
+    "karma-jasmine-html-reporter": "~2.1.0",
+    "typescript": "~5.9.2"
+  }
+}

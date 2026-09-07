@@ -1,0 +1,78 @@
+<main class="app-content feature-page about-page">
+  <div class="page-scroll">
+    <div class="about-panel">
+      <div class="about-hero">
+        <img
+          class="about-photo"
+          [src]="photoSrc"
+          alt="Paul Welby"
+          width="160"
+          height="160"
+          (error)="onPhotoError($event)"
+        />
+        <div class="about-hero-text">
+          <h2>Paul Welby</h2>
+          <p class="hint about-tagline">Full-stack developer · designer · San Diego / Fallbrook, CA</p>
+          <div class="about-links">
+            <a href="https://i-am-paul.netlify.app/" target="_blank" rel="noopener noreferrer">Personal website</a>
+            <a href="https://github.com/PaulyWolly" target="_blank" rel="noopener noreferrer">GitHub</a>
+            <a [href]="githubRepo" target="_blank" rel="noopener noreferrer">This repo</a>
+          </div>
+        </div>
+      </div>
+
+      <section class="about-section">
+        <h3>Who I am</h3>
+        <p>
+          I'm a results-driven web developer and UI designer with a full SDLC background. I work
+          across React and Angular, MongoDB and Firebase, and modern styling approaches — and I
+          care as much about how an app feels as how it works.
+        </p>
+        <p>
+          Outside of code I'm a singer/songwriter and guitarist, a bonsai and nature enthusiast,
+          and I enjoy cooking. Those same habits — iteration, taste, and building things people
+          enjoy — show up in the products I ship.
+        </p>
+      </section>
+
+      <section class="about-section">
+        <h3>Why MEAN-MultiChat Microservices</h3>
+        <p>
+          MEAN-MultiChat started as one Angular SPA talking to a single Express + MongoDB API —
+          chat, images, RAG, YouTube, recipes, jokes, TTS, and accounts behind one
+          <code>/api</code> surface. That was the right way to ship a learning workspace. The next
+          step is to prove the same product as a <strong>strangler-fig microservices</strong> backend:
+          keep the SPA unchanged, put a gateway in front, and peel each domain into its own Node
+          process.
+        </p>
+        <p>
+          Today the browser still calls familiar paths (<code>/api/chat</code>,
+          <code>/api/rag</code>, <code>/api/youtube</code>, …). An API gateway on port 4800 routes
+          each prefix to a dedicated service — auth, rag, images, chat, media, speech, jokes,
+          recipes, profile, usage, and platform — while Angular, Material, Observables, and JWT /
+          Auth0 stay exactly as they were. Microservices here are a <em>server-side</em> morph,
+          not a micro-frontend rewrite.
+        </p>
+        <p>
+          The impetus is still practical: learn by shipping. Evolving Multichat this way forces
+          clear service boundaries, a shared JWT contract, and deployable peels you can smoke-test
+          one tab at a time — a living portfolio of both product features and architecture.
+        </p>
+      </section>
+
+      <section class="about-section">
+        <h3>Building with AI</h3>
+        <p>
+          AI is both a product surface here (chat, images, RAG) and a partner in how the app gets
+          built. I use assistants to move faster on boilerplate, explore APIs, and polish UX —
+          while keeping ownership of product decisions, security boundaries, and the final look
+          and feel.
+        </p>
+        <p>
+          The goal isn't to replace craft; it's to amplify it — so more time goes into the
+          experience you see in Chat, YouTube, Images, RAG, and the rest of the menu.
+        </p>
+      </section>
+    </div>
+  </div>
+</main>
