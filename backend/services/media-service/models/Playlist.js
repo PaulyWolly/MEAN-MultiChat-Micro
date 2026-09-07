@@ -28,11 +28,14 @@ const PlaylistSchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now },
   /** Set only when a video is explicitly added/moved — used for "Most Recent". */
   lastVideoAddedAt: { type: Date },
+  /** Set when user plays/opens a playlist — preferred for "Most Recent". */
+  lastAccessedAt: { type: Date },
 });
 
 PlaylistSchema.index({ userId: 1, displayKey: 1 }, { unique: true, sparse: true });
 PlaylistSchema.index({ userId: 1, updatedAt: -1 });
 PlaylistSchema.index({ userId: 1, lastVideoAddedAt: -1 });
+PlaylistSchema.index({ userId: 1, lastAccessedAt: -1 });
 
 // Only bump updatedAt for new playlists or video list changes.
 // Cosmetic name/displayKey fixes must NOT rewrite updatedAt.

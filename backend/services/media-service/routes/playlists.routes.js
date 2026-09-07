@@ -242,6 +242,7 @@ router.get('/', requireAuth, async (req, res) => {
     await mergeDuplicatePlaylists(req.userId);
     await repairPlaylistActivityTimestamps(req.userId);
     const playlists = await Playlist.find({ userId: req.userId }).sort({
+      lastAccessedAt: -1,
       lastVideoAddedAt: -1,
       updatedAt: -1,
     });
@@ -302,6 +303,25 @@ router.post('/', requireAuth, async (req, res) => {
       error: 'Failed to create playlist',
       message: error.message || 'Failed to create playlist',
     });
+  }
+});
+
+// Mark playlist as recently used (play / open) — drives "Most Recent" without
+// pretending a video was added.
+router.post('/:playlistId/touch', requireAuth, async (req, res) => {
+  try {
+    const now = new Date();
+    const playlist = await Playlist.findOneAndUpdate(
+      { _id: req.params.playlistId, userId: req.userId },
+      { $set: { lastAccessedAt: now } },
+      { new: true },
+    );
+    if (!playlist) {
+      return res.status(404).json({ error: 'Playlist not found' });
+    }
+    res.json({ success: true, playlist });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update playlist activity' });
   }
 });
 

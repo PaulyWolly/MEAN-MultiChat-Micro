@@ -113,6 +113,15 @@ export async function moveVideoToPlaylist(
   return data
 }
 
+export async function touchPlaylist(playlistId) {
+  const { res, data } = await playlistRequest(
+    `/api/playlists/${encodeURIComponent(playlistId)}/touch`,
+    { method: "POST", body: JSON.stringify({}) }
+  )
+  if (!res.ok) throw new Error(playlistErrorMessage(data, "Failed to update playlist"))
+  return data
+}
+
 export async function deletePlaylist(playlistId) {
   const { res, data } = await playlistRequest(
     `/api/playlists/${encodeURIComponent(playlistId)}`,

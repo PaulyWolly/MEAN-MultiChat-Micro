@@ -27,7 +27,14 @@
               placeholder="New playlist name"
               aria-label="New playlist name"
             />
-            <button type="submit">Create Playlist</button>
+            <button
+              type="submit"
+              class="playlist-create-btn"
+              [class.is-ready]="!!newName().trim()"
+              [disabled]="!newName().trim()"
+            >
+              Create Playlist
+            </button>
           </form>
         </div>
 
@@ -137,7 +144,7 @@
                     type="button"
                     class="playlist-video-play"
                     title="Play in app player"
-                    (click)="playVideo.emit(v.videoId)"
+                    (click)="playFromPlaylist(v.videoId)"
                   >
                     <img [src]="v.thumbnail" alt="" />
                     <div class="playlist-video-meta">

@@ -20,6 +20,7 @@ import {
   listPlaylists,
   moveVideoToPlaylist,
   removeVideoFromPlaylist,
+  touchPlaylist,
 } from '../../services/api/playlists';
 import { AuthService } from '../../services/auth.service';
 import { ClearableInputComponent } from '../shared/clearable-input/clearable-input';
@@ -69,6 +70,8 @@ function buildSecondCounts(playlists: any[]) {
 }
 
 function playlistActivityTime(playlist: any, secondCounts: Map<string, number>) {
+  const lastAccess = toTime(playlist.lastAccessedAt);
+  if (lastAccess > 0) return lastAccess;
   const lastAdd = toTime(playlist.lastVideoAddedAt);
   if (lastAdd > 0) return lastAdd;
   const updated = toTime(playlist.updatedAt);
@@ -267,6 +270,25 @@ export class PlaylistManagerModalComponent implements AfterViewInit, OnDestroy {
     } finally {
       this.loading.set(false);
     }
+  }
+
+  /** Play in-app and mark this playlist as most recent for next open. */
+  async playFromPlaylist(videoId: string) {
+    const id = this.selectedId();
+    if (id) {
+      try {
+        const data = await touchPlaylist(id);
+        const updated = data?.playlist;
+        if (updated?._id) {
+          this.playlists.update((list) =>
+            list.map((p) => (p._id === updated._id ? { ...p, ...updated } : p)),
+          );
+        }
+      } catch {
+        // Still play even if activity stamp fails.
+      }
+    }
+    this.playVideo.emit(String(videoId || ''));
   }
 
   private maybeAutoSelect(
