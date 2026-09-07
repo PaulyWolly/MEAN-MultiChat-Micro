@@ -6,6 +6,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
+    "start:respawn": "node restart-on-crash.mjs",
     "dev": "node --watch server.js"
   },
   "engines": {

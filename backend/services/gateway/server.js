@@ -28,6 +28,14 @@ const PLATFORM_URL = (process.env.PLATFORM_URL || 'http://localhost:4812').repla
 const CORS_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:4200';
 const PROXY_TIMEOUT_MS = Number(process.env.PROXY_TIMEOUT_MS) || 5 * 60 * 1000;
 
+// Long-lived SSE + many proxy middlewares: don't let one socket error kill login.
+process.on('uncaughtException', (err) => {
+  console.error('[gateway] uncaughtException (kept alive):', err?.stack || err);
+});
+process.on('unhandledRejection', (reason) => {
+  console.error('[gateway] unhandledRejection (kept alive):', reason);
+});
+
 const app = express();
 app.disable('x-powered-by');
 
@@ -79,6 +87,7 @@ app.get('/healthz', (_req, res) => {
 app.get('/api/chat', (req, res) => {
   let isConnected = false;
   let connectionAttempts = 0;
+  let cleanedUp = false;
   const maxAttempts = 5;
 
   console.log('\n━━━━━━━━━━━ SSE Connection Request ━━━━━━━━━━━');
@@ -90,19 +99,42 @@ app.get('/api/chat', (req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
+  // Avoid proxy/socket errors taking down the whole gateway process.
+  res.on('error', (err) => {
+    console.log('[gateway] SSE response error:', err.message);
+    cleanup('response-error');
+  });
+  req.on('error', (err) => {
+    console.log('[gateway] SSE request error:', err.message);
+    cleanup('request-error');
+  });
+  req.socket?.on('error', (err) => {
+    console.log('[gateway] SSE socket error:', err.message);
+    cleanup('socket-error');
+  });
   res.flushHeaders?.();
 
-  res.write(`data: ${JSON.stringify({ type: 'connection', status: 'established' })}\n\n`);
+  try {
+    res.write(`data: ${JSON.stringify({ type: 'connection', status: 'established' })}\n\n`);
+  } catch (err) {
+    console.log('[gateway] SSE initial write failed:', err.message);
+    cleanup('initial-write');
+    return;
+  }
   isConnected = true;
 
   let heartPhase = 0;
   const heartbeatInterval = setInterval(() => {
+    if (cleanedUp || res.writableEnded || res.destroyed) {
+      cleanup('not-writable');
+      return;
+    }
     if (!isConnected) {
       console.log('Attempting to restore connection...');
       connectionAttempts++;
       if (connectionAttempts > maxAttempts) {
         console.log('Max reconnection attempts reached');
-        clearInterval(heartbeatInterval);
+        cleanup('max-attempts');
         return;
       }
     }
@@ -116,26 +148,37 @@ app.get('/api/chat', (req, res) => {
     heartPhase = (heartPhase + 1) % 3;
 
     try {
-      res.write(`data: ${JSON.stringify({ type: 'heartbeat' })}\n\n`);
+      const ok = res.write(`data: ${JSON.stringify({ type: 'heartbeat' })}\n\n`);
+      if (ok === false) {
+        // Backpressure / closed socket — stop ticking; 'drain'/'close' will finish cleanup.
+        isConnected = false;
+        return;
+      }
       isConnected = true;
       connectionAttempts = 0;
     } catch (error) {
       console.log('Heartbeat error:', error.message);
       isConnected = false;
+      cleanup('write-throw');
     }
   }, 500);
 
-  req.on('close', () => {
+  function cleanup(reason) {
+    if (cleanedUp) return;
+    cleanedUp = true;
+    clearInterval(heartbeatInterval);
     process.stdout.write(`\u001b[?25h`);
     process.stdout.write('\n');
     console.log('\n━━━━━━━━━━━ SSE Connection Closed ━━━━━━━━━━━');
     console.log('Time:', new Date().toLocaleTimeString());
     console.log('Session:', req.query.sessionId);
+    console.log('Reason:', reason);
     console.log('Final connection state:');
     console.log(JSON.stringify({ isConnected, attempts: connectionAttempts }, null, 4));
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
-    clearInterval(heartbeatInterval);
-  });
+  }
+
+  req.on('close', () => cleanup('client-close'));
 });
 
 function proxyOpts(target, extra = {}) {
@@ -293,7 +336,7 @@ app.use((_req, res) => {
   res.status(404).json({ ok: false, error: 'Not found' });
 });
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`[gateway] listening on http://localhost:${PORT}`);
   console.log(`[gateway] /api/auth, /api/users → ${AUTH_URL}`);
   console.log(`[gateway] /api/rag → ${RAG_URL}`);
@@ -308,4 +351,11 @@ app.listen(PORT, () => {
   console.log(`[gateway] /api/datetime, /api/events, /api/logs, … → ${PLATFORM_URL}`);
   console.log(`[gateway] /api/*   → ${MONOLITH_URL}`);
   console.log(`[gateway] CORS origin: ${CORS_ORIGIN}`);
+});
+
+// One close/upgrade listener per createProxyMiddleware → many peels.
+server.setMaxListeners(32);
+server.on('error', (err) => {
+  console.error('[gateway] server error:', err?.stack || err);
+  process.exit(1);
 });

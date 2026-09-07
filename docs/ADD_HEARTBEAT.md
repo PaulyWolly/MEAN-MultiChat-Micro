@@ -235,7 +235,11 @@ Any stable string is fine for logs (`anonymous` works). Prefer the same data-key
 
 ## 3) Dev proxy (Angular → API)
 
-For SSE through `ng serve`, keep the proxy from buffering/closing early:
+**Prefer connecting the heartbeat `EventSource` straight to the API/gateway host in local dev** (e.g. `environment.gatewayBase = 'http://localhost:4800'`). Long-lived SSE through the Vite/Angular http proxy often ends in `ECONNRESET` and can take down a fragile gateway (login then fails).
+
+REST can still use `apiBase: ''` + proxy. CORS on the gateway must allow the SPA origin (`http://localhost:4200`).
+
+If you must proxy SSE anyway:
 
 ```json
 {
@@ -251,7 +255,7 @@ For SSE through `ng serve`, keep the proxy from buffering/closing early:
 }
 ```
 
-Point `target` at your monolith port or gateway port. If `environment.apiBase` is already an absolute API URL, EventSource bypasses the Angular proxy — ensure CORS allows the SPA origin.
+Point `target` at your monolith port or gateway port. If `environment.apiBase` / `gatewayBase` is already an absolute API URL, EventSource bypasses the Angular proxy — ensure CORS allows the SPA origin.
 
 ---
 

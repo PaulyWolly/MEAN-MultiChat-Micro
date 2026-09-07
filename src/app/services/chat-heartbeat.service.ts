@@ -35,7 +35,12 @@ export class ChatHeartbeatService implements OnDestroy {
     if (this.stopped || typeof EventSource === 'undefined') return;
     this.source?.close();
 
-    const base = String(environment.apiBase || '').replace(/\/$/, '');
+    // Prefer gatewayBase so SSE does not go through the Vite/Angular http proxy.
+    const base = String(
+      (environment as { gatewayBase?: string }).gatewayBase ||
+        environment.apiBase ||
+        '',
+    ).replace(/\/$/, '');
     const sessionId = encodeURIComponent(getActiveDataKey() || 'anonymous');
     const url = `${base}/api/chat?sessionId=${sessionId}`;
 
