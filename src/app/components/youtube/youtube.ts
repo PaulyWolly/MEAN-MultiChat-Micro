@@ -464,6 +464,10 @@ export class YouTubeComponent implements OnInit, OnDestroy {
     if (!videoId) return;
     this.hushAppAudio();
     this.player.set({ kind: 'video', videoId: String(videoId) });
+    // Playing from Playlist Manager should dismiss the modal so the player is visible.
+    if (this.playlistOpen()) {
+      this.closePlaylists();
+    }
   }
 
   async openChannelPlayer(video: any) {
