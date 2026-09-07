@@ -71,13 +71,81 @@ app.get('/healthz', (_req, res) => {
   });
 });
 
-function proxyOpts(target) {
+/**
+ * Classic MultiChat SSE heartbeat lives on the gateway (quiet edge process)
+ * so the ♡/❤️/💗 \r animation stays the most recent terminal line.
+ * POST /api/chat still proxies to chat-service.
+ */
+app.get('/api/chat', (req, res) => {
+  let isConnected = false;
+  let connectionAttempts = 0;
+  const maxAttempts = 5;
+
+  console.log('\n━━━━━━━━━━━ SSE Connection Request ━━━━━━━━━━━');
+  console.log('Time:', new Date().toLocaleTimeString());
+  console.log('Client:', req.headers['user-agent']);
+  console.log('Session:', req.query.sessionId);
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders?.();
+
+  res.write(`data: ${JSON.stringify({ type: 'connection', status: 'established' })}\n\n`);
+  isConnected = true;
+
+  let heartPhase = 0;
+  const heartbeatInterval = setInterval(() => {
+    if (!isConnected) {
+      console.log('Attempting to restore connection...');
+      connectionAttempts++;
+      if (connectionAttempts > maxAttempts) {
+        console.log('Max reconnection attempts reached');
+        clearInterval(heartbeatInterval);
+        return;
+      }
+    }
+
+    const hearts = ['♡', '❤️', '💗'];
+    const heart = hearts[heartPhase];
+    process.stdout.write(`\r\u001b[?25l`);
+    process.stdout.write(
+      `💓 Heartbeat ${new Date().toLocaleTimeString()} ${heart}                \u001b[?25l`,
+    );
+    heartPhase = (heartPhase + 1) % 3;
+
+    try {
+      res.write(`data: ${JSON.stringify({ type: 'heartbeat' })}\n\n`);
+      isConnected = true;
+      connectionAttempts = 0;
+    } catch (error) {
+      console.log('Heartbeat error:', error.message);
+      isConnected = false;
+    }
+  }, 500);
+
+  req.on('close', () => {
+    process.stdout.write(`\u001b[?25h`);
+    process.stdout.write('\n');
+    console.log('\n━━━━━━━━━━━ SSE Connection Closed ━━━━━━━━━━━');
+    console.log('Time:', new Date().toLocaleTimeString());
+    console.log('Session:', req.query.sessionId);
+    console.log('Final connection state:');
+    console.log(JSON.stringify({ isConnected, attempts: connectionAttempts }, null, 4));
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+    clearInterval(heartbeatInterval);
+  });
+});
+
+function proxyOpts(target, extra = {}) {
   return {
     target,
     changeOrigin: true,
     selfHandleResponse: false,
     proxyTimeout: PROXY_TIMEOUT_MS,
     timeout: PROXY_TIMEOUT_MS,
+    ...extra,
     on: {
       proxyReq(proxyReq, req) {
         if (req.requestId) {
@@ -137,7 +205,17 @@ app.use(
 app.use(
   createProxyMiddleware({
     ...proxyOpts(CHAT_URL),
-    pathFilter: prefixFilter('/api/chat', '/api/claude', '/api/conversations'),
+    // GET /api/chat is the gateway heartbeat above; proxy everything else.
+    pathFilter: (pathname, req) => {
+      if (pathname === '/api/claude' || pathname.startsWith('/api/claude/')) return true;
+      if (pathname === '/api/conversations' || pathname.startsWith('/api/conversations/')) {
+        return true;
+      }
+      if (pathname === '/api/chat' || pathname.startsWith('/api/chat/')) {
+        return !(req.method === 'GET' && (pathname === '/api/chat' || pathname === '/api/chat/'));
+      }
+      return false;
+    },
   }),
 );
 
@@ -220,7 +298,7 @@ app.listen(PORT, () => {
   console.log(`[gateway] /api/auth, /api/users → ${AUTH_URL}`);
   console.log(`[gateway] /api/rag → ${RAG_URL}`);
   console.log(`[gateway] /api/images, /api/analyze-image → ${IMAGES_URL}`);
-  console.log(`[gateway] /api/chat, /api/claude, /api/conversations → ${CHAT_URL}`);
+  console.log(`[gateway] GET /api/chat → local ♡ heartbeat; POST /api/chat + claude/conversations → ${CHAT_URL}`);
   console.log(`[gateway] /api/youtube, /api/playlists, /api/image-search → ${MEDIA_URL}`);
   console.log(`[gateway] /api/tts, /api/voices → ${SPEECH_URL}`);
   console.log(`[gateway] /api/jokes → ${JOKES_URL}`);

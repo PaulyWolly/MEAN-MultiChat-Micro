@@ -4,6 +4,7 @@ import { HeaderComponent } from './components/shared/header/header';
 import { FooterComponent } from './components/shared/footer/footer';
 import { ToastStackComponent } from './components/shared/toast-stack/toast-stack';
 import { AuthService } from './services/auth.service';
+import { ChatHeartbeatService } from './services/chat-heartbeat.service';
 import { abortAllSpeechRecognition, stopSpeaking } from './components/shared/speech/speech';
 import {
   claimYouTubeAudioLock,
@@ -17,8 +18,12 @@ import {
 })
 export class App {
   readonly auth = inject(AuthService);
+  private readonly chatHeartbeat = inject(ChatHeartbeatService);
 
   constructor() {
+    // Keep GET /api/chat SSE open so the gateway logs the ♡ heartbeat.
+    this.chatHeartbeat.start();
+
     const router = inject(Router);
     router.events.subscribe((event) => {
       if (!(event instanceof NavigationStart)) return;

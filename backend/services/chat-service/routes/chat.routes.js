@@ -46,6 +46,7 @@ router.get('/', (req, res) => {
   res.write(`data: ${JSON.stringify({ type: 'connection', status: 'established' })}\n\n`)
   isConnected = true
 
+  // Direct hits to :4804 still animate; browser traffic uses gateway GET /api/chat.
   let heartPhase = 0
   const heartbeatInterval = setInterval(() => {
     if (!isConnected) {
