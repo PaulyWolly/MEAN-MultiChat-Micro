@@ -20,23 +20,14 @@
             [value]="filter()"
             (valueChange)="filter.set($event)"
           />
-          <form class="playlist-create-form" (submit)="handleCreate($event)">
-            <input
-              [value]="newName()"
-              (input)="newName.set($any($event.target).value)"
-              placeholder="New playlist name"
-              aria-label="New playlist name"
-            />
-            <button
-              type="submit"
-              class="playlist-create-btn"
-              [class.is-ready]="!!newName().trim()"
-              [disabled]="!newName().trim()"
-            >
-              <span class="playlist-create-label-full">Create Playlist</span>
-              <span class="playlist-create-label-short">Create</span>
-            </button>
-          </form>
+          <button
+            type="button"
+            class="secondary-button playlist-new-btn"
+            (click)="openCreateModal()"
+            title="Create a new playlist"
+          >
+            New
+          </button>
         </div>
 
         <div class="playlist-manager-row">
@@ -232,5 +223,61 @@
       (confirmed)="confirmPendingDelete()"
       (cancelled)="pendingDelete.set(null)"
     />
+
+    @if (createOpen()) {
+      <div
+        class="playlist-create-modal-backdrop"
+        role="presentation"
+        (click)="closeCreateModal()"
+      >
+        <div
+          class="playlist-create-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="playlist-create-title"
+          (click)="$event.stopPropagation()"
+        >
+          <header class="playlist-create-modal-header">
+            <h3 id="playlist-create-title">Create playlist</h3>
+            <app-modal-close-button (close)="closeCreateModal()" />
+          </header>
+          <form class="playlist-create-modal-body" (submit)="handleCreate($event)">
+            <label class="playlist-create-field">
+              <span class="visually-hidden">Playlist name</span>
+              <input
+                #createNameInput
+                [value]="newName()"
+                (input)="newName.set($any($event.target).value)"
+                placeholder="Playlist name"
+                aria-label="Playlist name"
+                autocomplete="off"
+                [disabled]="creating()"
+              />
+            </label>
+            @if (error()) {
+              <p class="chat-error">{{ error() }}</p>
+            }
+            <div class="playlist-create-modal-actions">
+              <button
+                type="submit"
+                class="playlist-create-btn"
+                [class.is-ready]="!!newName().trim()"
+                [disabled]="!newName().trim() || creating()"
+              >
+                {{ creating() ? 'Creating…' : 'Create' }}
+              </button>
+              <button
+                type="button"
+                class="secondary-button"
+                (click)="closeCreateModal()"
+                [disabled]="creating()"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    }
   </div>
 }

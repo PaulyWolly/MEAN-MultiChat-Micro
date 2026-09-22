@@ -251,7 +251,7 @@ app-footer {
 .restart-mic-button,
 .jokes-history-btn,
 .chat-history-btn,
-.playlist-create-form button,
+.playlist-create-btn,
 .rag-document-item__delete,
 .rag-view-answer-btn,
 .header-logout-btn,
@@ -4050,6 +4050,7 @@ a.image-generate-download {
 }
 
 .playlist-manager-modal {
+  position: relative;
   width: min(1430px, 98vw);
   height: min(90vh, 820px);
   max-height: min(90vh, 820px);
@@ -4089,41 +4090,127 @@ a.image-generate-download {
 
 .playlist-controls-row {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  align-items: center;
   gap: 10px;
   margin-bottom: 12px;
   flex-shrink: 0;
+  width: 100%;
 }
 
-.playlist-search-input,
-.playlist-create-form input {
+.playlist-search-input {
   font: inherit;
   padding: 8px 10px;
   border-radius: 8px;
   border: 1px solid var(--border);
   background: var(--bg);
   color: var(--text-h);
-  min-width: 180px;
+  min-width: 0;
   flex: 1;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.playlist-controls-row > app-clearable-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: block;
 }
 
 .playlist-controls-row .clearable-input {
   flex: 1;
-  min-width: 180px;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .playlist-controls-row .clearable-input input {
   min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-.playlist-create-form {
+.playlist-new-btn {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.playlist-create-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  box-sizing: border-box;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.playlist-create-modal {
+  width: min(420px, 100%);
+  background: var(--bg);
+  color: var(--text-h);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.playlist-create-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--social-bg);
+}
+
+.playlist-create-modal-header h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.playlist-create-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+}
+
+.playlist-create-field {
+  display: block;
+  width: 100%;
+  margin: 0;
+}
+
+.playlist-create-field input {
+  width: 100%;
+  box-sizing: border-box;
+  font: inherit;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text-h);
+}
+
+.playlist-create-modal-actions {
   display: flex;
   gap: 8px;
-  flex: 1;
   flex-wrap: wrap;
 }
 
-.playlist-create-form button {
+.playlist-create-modal-actions .playlist-create-btn,
+.playlist-create-modal-actions .secondary-button {
+  flex: 1 1 auto;
+  min-width: 7rem;
+}
+
+.playlist-create-btn {
   border: 1px solid var(--border);
   background: var(--accent-bg);
   color: var(--text-h);
@@ -4137,7 +4224,7 @@ a.image-generate-download {
     box-shadow 0.15s ease;
 }
 
-.playlist-create-form button.is-ready {
+.playlist-create-btn.is-ready {
   opacity: 1;
   cursor: pointer;
   background: var(--accent);
@@ -4146,13 +4233,13 @@ a.image-generate-download {
   font-weight: 700;
 }
 
-.playlist-create-form button.is-ready:hover {
+.playlist-create-btn.is-ready:hover {
   background: #9bbcf5;
   color: #000;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
 }
 
-.playlist-create-form button.is-ready:active {
+.playlist-create-btn.is-ready:active {
   background: #8aafef;
 }
 
@@ -7410,44 +7497,39 @@ app-playlist-scroll-area.playlist-videos-scroll .playlist-scroll-area__viewport 
   }
 
   .playlist-controls-row {
-    flex-direction: column;
+    flex-direction: row;
+    flex-wrap: nowrap;
     gap: 8px;
     margin-bottom: 0;
     flex-shrink: 0;
+    width: 100%;
   }
 
+  .playlist-controls-row > app-clearable-input,
   .playlist-controls-row .clearable-input,
-  .playlist-create-form,
-  .playlist-search-input,
-  .playlist-create-form input {
+  .playlist-search-input {
     min-width: 0;
     width: 100%;
     flex: 1 1 auto;
   }
 
-  .playlist-create-form {
-    flex-wrap: nowrap;
-    gap: 8px;
-  }
-
-  .playlist-create-form input {
-    flex: 1 1 auto;
-    min-width: 0;
-  }
-
-  .playlist-create-form button {
-    width: auto;
+  .playlist-new-btn {
     flex: 0 0 auto;
-    white-space: nowrap;
     padding-inline: 12px;
   }
 
-  .playlist-create-label-full {
-    display: none;
+  .playlist-create-modal-backdrop {
+    padding: 12px;
+    align-items: flex-start;
+    padding-top: max(24px, env(safe-area-inset-top, 0px));
   }
 
-  .playlist-create-label-short {
-    display: inline;
+  .playlist-create-modal {
+    width: 100%;
+  }
+
+  .playlist-create-field input {
+    font-size: 16px;
   }
 
   .playlist-manager-row {

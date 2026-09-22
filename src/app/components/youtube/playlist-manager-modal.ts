@@ -5,6 +5,7 @@ import {
   ElementRef,
   HostListener,
   OnDestroy,
+  ViewChild,
   computed,
   effect,
   inject,
@@ -112,6 +113,8 @@ export class PlaylistManagerModalComponent implements AfterViewInit, OnDestroy {
   selectedId = signal<string | null>(null);
   filter = signal('');
   newName = signal('');
+  createOpen = signal(false);
+  creating = signal(false);
   message = signal('');
   error = signal('');
   loading = signal(false);
@@ -120,6 +123,8 @@ export class PlaylistManagerModalComponent implements AfterViewInit, OnDestroy {
   movingId = signal<string | null>(null);
   provisioning = signal(false);
   pendingDelete = signal<any | null>(null);
+
+  @ViewChild('createNameInput') private createNameInput?: ElementRef<HTMLInputElement>;
 
   private autoSelectKey = '';
   private autoProvisionKey = '';
@@ -136,6 +141,7 @@ export class PlaylistManagerModalComponent implements AfterViewInit, OnDestroy {
           this.provisioningLock = false;
           this.filter.set('');
           this.provisioning.set(false);
+          this.closeCreateModal();
           return;
         }
         void this.load();
@@ -395,16 +401,38 @@ export class PlaylistManagerModalComponent implements AfterViewInit, OnDestroy {
   async handleCreate(event: Event) {
     event.preventDefault();
     const name = this.newName().trim();
-    if (!name) return;
+    if (!name || this.creating()) return;
+    this.creating.set(true);
+    this.error.set('');
     try {
       const result = await createPlaylist(name);
       this.selectedId.set(result.playlist?._id || null);
       this.showMsg(result.duplicate ? 'Playlist already exists — selected it.' : 'Playlist created.');
       this.newName.set('');
+      this.closeCreateModal();
       await this.load();
     } catch (err: any) {
       this.error.set(err.message);
+    } finally {
+      this.creating.set(false);
     }
+  }
+
+  openCreateModal() {
+    this.error.set('');
+    const video = this.pendingVideo();
+    const query = this.contextQuery();
+    if (!this.newName().trim() && video) {
+      const suggested = suggestedPlaylistNameFromVideo(video, query);
+      if (suggested) this.newName.set(suggested);
+    }
+    this.createOpen.set(true);
+    queueMicrotask(() => this.createNameInput?.nativeElement?.focus());
+  }
+
+  closeCreateModal() {
+    this.createOpen.set(false);
+    this.creating.set(false);
   }
 
   async addVideo(playlistId: string, video: any) {
