@@ -13,13 +13,9 @@ const express          = require('express');
 const cors             = require('cors');
 const dotenv           = require('dotenv');
 const path = require('path');
-const fs = require('fs');
 
-// Local dev: gitignored .env. Render: set the same keys in Environment (no file).
-const envPath = path.join(__dirname, '.env');
-if (fs.existsSync(envPath)) {
-  dotenv.config({ path: envPath });
-}
+// Local dev: gitignored backend/server/.env. Render: set the same keys in Environment (no file).
+require('../loadEnv')(dotenv, __dirname);
 
 // Durable /logs logger — install crash handlers before anything else can throw
 const logger = require('./lib/logger');

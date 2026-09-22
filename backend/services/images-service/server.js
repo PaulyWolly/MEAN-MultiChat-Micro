@@ -3,7 +3,7 @@
  * Gateway: /api/images + /api/analyze-image → this process :4803
  * (image-search stays on the monolith for now.)
  */
-const path = require('path');
+require('../../loadEnv')(require('dotenv'), __dirname);
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
@@ -11,9 +11,6 @@ const { resolveMongoUri } = require('./mongoDnsFallback');
 const { logAiLimits } = require('./lib/aiLimits');
 const imagesRoutes = require('./routes/images.routes');
 const analyzeImageRoutes = require('./routes/analyze-image.routes');
-
-require('dotenv').config({ path: path.join(__dirname, '../../server/.env') });
-require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const PORT = Number(process.env.PORT) || 4803;
 const CORS_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:4200';

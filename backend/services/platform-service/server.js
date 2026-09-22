@@ -3,15 +3,13 @@
  * Gateway: /api/datetime, /api/events, /api/logs, /api/quota, /api/debug,
  *          /api/db-test, /api/cleanup → this process :4812
  */
+require('../../loadEnv')(require('dotenv'), __dirname);
 const path = require('path');
 const { spawn } = require('child_process');
 const express = require('express');
 const cors = require('cors');
 const chalk = require('chalk');
 const mongoose = require('mongoose');
-
-require('dotenv').config({ path: path.join(__dirname, '../../server/.env') });
-require('dotenv').config({ path: path.join(__dirname, '.env'), override: true });
 
 const { resolveMongoUri } = require('./mongoDnsFallback');
 const logger = require('./lib/logger');

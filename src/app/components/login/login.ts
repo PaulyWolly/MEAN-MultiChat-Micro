@@ -33,11 +33,19 @@ export class LoginComponent implements OnInit {
   }
 
   ngOnInit() {
-    void this.handleOAuthReturn();
+    void this.waitAndHandleOAuthReturn();
+  }
+
+  /** Auth hydrate is async — do not drop the Auth0 hash before ready flips true. */
+  private async waitAndHandleOAuthReturn() {
+    const started = Date.now();
+    while (!this.auth.ready() && Date.now() - started < 8000) {
+      await new Promise((r) => setTimeout(r, 25));
+    }
+    await this.handleOAuthReturn();
   }
 
   private async handleOAuthReturn() {
-    if (!this.auth.ready()) return;
     const result = parseOAuthRedirectHash();
     if (!result) return;
     if (result.error) {
@@ -57,7 +65,6 @@ export class LoginComponent implements OnInit {
       });
       await this.router.navigateByUrl('/', { replaceUrl: true });
     } catch (err: any) {
-      this.guestUpgrading.set(true);
       this.error.set(err?.message || 'Social login failed');
     } finally {
       this.oauthBusy.set(false);

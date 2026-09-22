@@ -2,13 +2,10 @@
  * Usage microservice — AI status / quotas peel from the Express monolith.
  * Gateway: /api/ai → this process :4811
  */
-const path = require('path');
+require('../../loadEnv')(require('dotenv'), __dirname);
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
-
-require('dotenv').config({ path: path.join(__dirname, '../../server/.env') });
-require('dotenv').config({ path: path.join(__dirname, '.env'), override: true });
 
 const { resolveMongoUri } = require('./mongoDnsFallback');
 const { logAiLimits } = require('./lib/aiLimits');

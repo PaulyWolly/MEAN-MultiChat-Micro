@@ -105,16 +105,49 @@ export async function fetchAzureVoices() {
   return res.json()
 }
 
+/** Android Conversation Mode — Azure Speech transcription of a short clip. */
+export async function transcribeSpeech(blob, language = "en-US") {
+  const token = getStoredToken()
+  const form = new FormData()
+  const type = String(blob?.type || "audio/webm").split(";")[0]
+  const ext = type.includes("wav")
+    ? "wav"
+    : type.includes("mp4") || type.includes("aac") || type.includes("m4a")
+      ? "m4a"
+      : type.includes("ogg")
+        ? "ogg"
+        : "webm"
+  const file = new File([blob], `speech.${ext}`, { type: type || "audio/webm" })
+  form.append("file", file)
+  form.append("language", language || "en-US")
+  const ac = new AbortController()
+  const timer = setTimeout(() => ac.abort(), 20000)
+  let res
+  try {
+    res = await fetch(`${API_BASE}/api/stt`, {
+      method: "POST",
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: form,
+      signal: ac.signal,
+    })
+  } catch (err) {
+    if (err?.name === "AbortError") throw new Error("Transcription timed out. Try again.")
+    throw err
+  } finally {
+    clearTimeout(timer)
+  }
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok || data.success === false) {
+    throw new Error(data.message || data.error || "Transcription failed")
+  }
+  return String(data.text || "").trim()
+}
+
 /** Azure TTS via Node-AI POST /api/tts — returns playable blob URL helpers */
 let currentTtsAudio = null
 
-/**
- * Synthesise text and return a playable blob URL without starting playback.
- *
- * Kept separate from playback so a caller can render the next sentence while
- * the current one is still speaking. The caller owns the URL and must pass it
- * to playTtsAudioUrl (which revokes it) or call URL.revokeObjectURL itself.
- */
 export async function fetchTtsAudioUrl(text, voice = "en-US-AndrewNeural") {
   // Keep markdown structure as SSML pauses (titles / paragraphs / list items).
   // Do NOT flatten all whitespace — that is what made recipes sound jumbled.

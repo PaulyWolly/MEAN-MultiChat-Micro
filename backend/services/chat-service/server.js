@@ -2,7 +2,7 @@
  * Chat microservice — peel from the Express monolith.
  * Gateway: /api/chat + /api/claude + /api/conversations → this process :4804
  */
-const path = require('path');
+require('../../loadEnv')(require('dotenv'), __dirname);
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
@@ -11,10 +11,6 @@ const { logAiLimits } = require('./lib/aiLimits');
 const chatRoutes = require('./routes/chat.routes');
 const claudeRoutes = require('./routes/claude.routes');
 const chatHistoryRoutes = require('./routes/chatHistory.routes');
-
-// Load monolith .env first (shared secrets), then local overrides (PORT/CORS).
-require('dotenv').config({ path: path.join(__dirname, '../../server/.env') });
-require('dotenv').config({ path: path.join(__dirname, '.env'), override: true });
 
 const PORT = Number(process.env.PORT) || 4804;
 const CORS_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:4200';

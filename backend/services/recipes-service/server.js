@@ -4,12 +4,9 @@
  * Jokes live in jokes-service (:4807) — do not mount them here.
  * No Mongo / OpenAI — pure text formatting of AI chat output.
  */
-const path = require('path');
+require('../../loadEnv')(require('dotenv'), __dirname);
 const express = require('express');
 const cors = require('cors');
-
-require('dotenv').config({ path: path.join(__dirname, '../../server/.env') });
-require('dotenv').config({ path: path.join(__dirname, '.env'), override: true });
 
 const recipeRoutes = require('./routes/recipe.routes');
 

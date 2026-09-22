@@ -5,6 +5,8 @@
         <app-voice-mic-button (transcript)="onVoice($event)" (failed)="toast.show($event, 'error')" [disabled]="loading() || !!player()" />
         <app-clearable-input [value]="query()" (valueChange)="query.set($event)" placeholder="Search YouTube… or use Mic" ariaLabel="YouTube search" />
         <app-search-icon-button [loading]="loading()" [disabled]="loading()" />
+      </form>
+      <div class="youtube-toolbar-actions">
         <button
           type="button"
           class="secondary-button youtube-toolbar-btn"
@@ -23,16 +25,16 @@
         >
           History
         </button>
-      </form>
-      <button
-        type="button"
-        class="secondary-button youtube-toolbar-btn youtube-toolbar-btn--playlists"
-        (click)="openPlaylists(null)"
-        aria-haspopup="dialog"
-        title="Open playlist manager"
-      >
-        Playlists
-      </button>
+        <button
+          type="button"
+          class="secondary-button youtube-toolbar-btn youtube-toolbar-btn--playlists"
+          (click)="openPlaylists(null)"
+          aria-haspopup="dialog"
+          title="Open playlist manager"
+        >
+          Playlists
+        </button>
+      </div>
     </div>
     <p class="hint youtube-intro-hint">
       Search or use <strong>Mic</strong>. Click a thumbnail to play here —
@@ -42,12 +44,15 @@
     @if (activeQuery() && videos().length > 0) {
       <div class="youtube-results-header">
         <div class="youtube-results-heading">
-          <h3>
-            Results for “{{ resultsLabel() }}” · Page {{ page() }}{{ pageLabel() }}
-            @if (cacheStatusLabel()) {
-              <span class="youtube-results-status">({{ cacheStatusLabel() }})</span>
-            }
-          </h3>
+          <div class="youtube-results-copy">
+            <h3>Results for “{{ resultsLabel() }}”</h3>
+            <p class="youtube-results-meta">
+              Page {{ page() }}{{ pageLabel() }}
+              @if (cacheStatusLabel()) {
+                <span class="youtube-results-status">({{ cacheStatusLabel() }})</span>
+              }
+            </p>
+          </div>
           <button
             type="button"
             class="youtube-led-btn"

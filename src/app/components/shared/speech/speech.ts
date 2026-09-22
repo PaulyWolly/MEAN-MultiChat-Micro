@@ -8,6 +8,18 @@ import { stripForSpeech } from "./tts-prep"
  * Mic helpers + speak via Express /api/tts (Node-AI Azure Neural).
  */
 
+/** Chrome on Android plays a start/stop earcon on every SpeechRecognition start/abort. */
+export function isAndroidChrome() {
+  if (typeof navigator === "undefined") return false
+  const ua = navigator.userAgent || ""
+  return /Android/i.test(ua) && /Chrome|CriOS/i.test(ua)
+}
+
+/** Extra silence after TTS so the speaker echo is not treated as the next utterance. */
+export function listenResumeDelayMs() {
+  return isAndroidChrome() ? 1400 : 650
+}
+
 const VOICE_STORAGE_KEY = "claude-chatbot-voice-id"
 const MODEL_STORAGE_KEY = "multichat-chat-model"
 const LEGACY_MODEL_STORAGE_KEY = "claude-chatbot-model"

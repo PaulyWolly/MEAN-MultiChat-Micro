@@ -32,6 +32,7 @@
           <strong>{{ profile()?.name || (auth.isAuthenticated() ? 'My Profile' : 'Guest') }}</strong>
           <span>{{ auth.user()?.email || 'Not signed in' }}</span>
         </div>
+        <app-modal-close-button (close)="open.set(false)" />
       </div>
 
       <div class="profile-menu-divider"></div>

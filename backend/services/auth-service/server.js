@@ -2,17 +2,13 @@
  * Auth microservice — peel from the Express monolith.
  * Gateway: /api/auth + /api/users → this process :4801
  */
-const path = require('path');
+require('../../loadEnv')(require('dotenv'), __dirname);
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const { resolveMongoUri } = require('./mongoDnsFallback');
 const authRoutes = require('./routes/auth.routes');
 const usersRoutes = require('./routes/users.routes');
-
-// Load monolith .env first (shared secrets), then local overrides (PORT/CORS).
-require('dotenv').config({ path: path.join(__dirname, '../../server/.env') });
-require('dotenv').config({ path: path.join(__dirname, '.env'), override: true });
 
 const PORT = Number(process.env.PORT) || 4801;
 const CORS_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:4200';

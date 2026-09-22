@@ -28,7 +28,7 @@ export const MESSAGES = {
     READY: "Conversation Mode ready. Speak whenever you're ready — say \"exit\" to end.",
   },
   CLOSINGS: {
-    EXIT: "OK. Bye for now. We'll chat later!",
+    EXIT: "Okay. We'll chat later. Bye for now.",
     TIMEOUT: (minutes) =>
       `I haven't heard anything for ${minutes} minute${minutes === 1 ? "" : "s"}, so I'll end our conversation now. Feel free to restart Conversation Mode when you'd like to chat again!`,
   },
@@ -55,7 +55,11 @@ export function formatCountdown(totalSeconds) {
 }
 
 export function isExitPhrase(text) {
-  const t = String(text || '').trim().toLowerCase().replace(/[.!?]+$/, '');
+  const t = String(text || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[.!?]+$/u, '')
+    .replace(/\s+/gu, ' ');
   return (
     t === 'exit' ||
     t === 'quit' ||

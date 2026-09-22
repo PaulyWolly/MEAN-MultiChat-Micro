@@ -1,5 +1,5 @@
-import { Component, inject } from '@angular/core';
-import { RouterLink, RouterLinkActive, Router } from '@angular/router';
+import { Component, inject, signal } from '@angular/core';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../../services/auth.service';
 import { ProfileMenuComponent } from '../profile-menu/profile-menu';
 
@@ -35,6 +35,17 @@ const OTHER_NAV = [
 export class HeaderComponent {
   readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  readonly navOpen = signal(false);
+
+  constructor() {
+    this.router.events.subscribe((event) => {
+      if (event instanceof NavigationEnd) this.navOpen.set(false);
+    });
+  }
+
+  toggleNav() {
+    this.navOpen.update((open) => !open);
+  }
 
   get aiNav() {
     if (this.auth.isAuthenticated() || this.auth.isGuest()) return AI_NAV;

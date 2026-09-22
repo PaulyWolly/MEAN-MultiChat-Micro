@@ -1,16 +1,21 @@
 <header class="app-header">
   <div class="header-text">
-    <div class="header-brand">
+    <a routerLink="/" class="header-logo" title="Chat" aria-label="Go to Chat">
       <h1>
         MEAN-MultiChat
         <span class="header-micro-label">Microservices</span>
       </h1>
-    </div>
-    <nav class="main-nav" aria-label="Main">
+    </a>
+    <nav
+      id="main-nav"
+      class="main-nav"
+      [class.is-open]="navOpen()"
+      aria-label="Main"
+    >
       @if (aiNav.length) {
         <div class="nav-ai-group" aria-label="AI tools">
           <span class="nav-ai-label">AI</span>
-          @for (item of aiNav; track item.to; let last = $last) {
+          @for (item of aiNav; track item.to) {
             <a
               [routerLink]="item.to"
               routerLinkActive="active"
@@ -18,9 +23,6 @@
             >
               {{ item.label }}
             </a>
-            @if (!last) {
-              <span class="nav-ai-sep" aria-hidden="true">|</span>
-            }
           }
         </div>
       }
@@ -30,7 +32,7 @@
         </a>
       }
       @if (showAbout) {
-        <span> | </span>
+        <span class="nav-pipe d-none d-lg-inline"> | </span>
         <a routerLink="/about" routerLinkActive="active">About</a>
       }
       <a routerLink="/login" routerLinkActive="active">{{ accountLabel }}</a>
@@ -46,6 +48,18 @@
   }
 
   <div class="header-actions">
+    <button
+      type="button"
+      class="nav-toggle d-lg-none"
+      [attr.aria-expanded]="navOpen()"
+      aria-controls="main-nav"
+      [attr.aria-label]="navOpen() ? 'Close menu' : 'Open menu'"
+      (click)="toggleNav()"
+    >
+      <span class="nav-toggle-bar" aria-hidden="true"></span>
+      <span class="nav-toggle-bar" aria-hidden="true"></span>
+      <span class="nav-toggle-bar" aria-hidden="true"></span>
+    </button>
     <app-profile-menu />
   </div>
 </header>

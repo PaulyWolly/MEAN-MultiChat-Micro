@@ -5,12 +5,11 @@
  *                 → /api/* → monolith :4810 (stub leftover)
  */
 const crypto = require('crypto');
-const path = require('path');
 const express = require('express');
 const cors = require('cors');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 
-require('dotenv').config({ path: path.join(__dirname, '.env') });
+require('../../loadEnv')(require('dotenv'), __dirname);
 
 const PORT = Number(process.env.PORT) || 4800;
 const MONOLITH_URL = (process.env.MONOLITH_URL || 'http://localhost:4810').replace(/\/$/, '');
@@ -278,7 +277,7 @@ app.use(
 app.use(
   createProxyMiddleware({
     ...proxyOpts(SPEECH_URL),
-    pathFilter: prefixFilter('/api/tts', '/api/voices'),
+    pathFilter: prefixFilter('/api/tts', '/api/stt', '/api/voices'),
   }),
 );
 
@@ -343,7 +342,7 @@ const server = app.listen(PORT, () => {
   console.log(`[gateway] /api/images, /api/analyze-image → ${IMAGES_URL}`);
   console.log(`[gateway] GET /api/chat → local ♡ heartbeat; POST /api/chat + claude/conversations → ${CHAT_URL}`);
   console.log(`[gateway] /api/youtube, /api/playlists, /api/image-search → ${MEDIA_URL}`);
-  console.log(`[gateway] /api/tts, /api/voices → ${SPEECH_URL}`);
+  console.log(`[gateway] /api/tts, /api/stt, /api/voices → ${SPEECH_URL}`);
   console.log(`[gateway] /api/jokes → ${JOKES_URL}`);
   console.log(`[gateway] /api/recipe → ${RECIPES_URL}`);
   console.log(`[gateway] /api/personal-info → ${PROFILE_URL}`);

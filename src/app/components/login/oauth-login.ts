@@ -3,6 +3,11 @@ import { environment } from '../../../environments/environment'
 /**
  * Auth0 / Google OAuth helpers (client-side Universal Login / Google OAuth).
  * Configure via src/environments/environment.ts.
+ *
+ * Uses implicit / hybrid fragment tokens (`token id_token`). Auth0 Application
+ * must be a SPA with callback http(s)://<origin>/login and Implicit (or
+ * matching OIDC) grants enabled — otherwise Auth0 returns ?code= and we cannot
+ * finish login without PKCE.
  */
 
 function appOrigin() {
@@ -39,6 +44,7 @@ export function buildAuth0AuthorizeUrl({ connection } = {}) {
   const params = new URLSearchParams({
     client_id: clientId,
     response_type: "token id_token",
+    response_mode: "fragment",
     redirect_uri: redirectUri,
     scope: "openid profile email",
     nonce: crypto.randomUUID?.() || String(Date.now()),
@@ -93,32 +99,58 @@ export function startGoogleLogin() {
   window.location.assign(url)
 }
 
+function clearOAuthParamsFromUrl() {
+  const { pathname } = window.location
+  window.history.replaceState({}, document.title, pathname)
+}
+
 /**
- * Parse Auth0 / Google redirect hash on /login.
- * Clears the hash from the URL after reading.
+ * Parse Auth0 / Google redirect on /login (hash fragment and/or query string).
+ * Clears tokens from the URL after reading.
  * @returns {{ accessToken?: string, idToken?: string, provider: string, error?: string, errorDescription?: string } | null}
  */
 export function parseOAuthRedirectHash() {
   if (typeof window === "undefined") return null
-  const raw = window.location.hash?.replace(/^#/, "") || ""
-  if (!raw) return null
 
-  const params = new URLSearchParams(raw)
-  const error = params.get("error") || ""
-  const errorDescription = params.get("error_description") || ""
-  const accessToken = params.get("access_token") || ""
-  const idToken = params.get("id_token") || ""
-  const state = params.get("state") || "auth0"
+  const hashRaw = window.location.hash?.replace(/^#/, "") || ""
+  const queryRaw = window.location.search?.replace(/^\?/, "") || ""
+  if (!hashRaw && !queryRaw) return null
 
-  // Clear sensitive tokens from the address bar
-  const { pathname, search } = window.location
-  window.history.replaceState({}, document.title, `${pathname}${search}`)
+  const hash = new URLSearchParams(hashRaw)
+  const query = new URLSearchParams(queryRaw)
+
+  const pick = (key) => hash.get(key) || query.get(key) || ""
+
+  const error = pick("error")
+  const errorDescription = pick("error_description")
+  const accessToken = pick("access_token")
+  const idToken = pick("id_token")
+  const code = pick("code")
+  const state = pick("state") || "auth0"
+
+  const hadOAuthNoise = Boolean(
+    error || accessToken || idToken || code || hashRaw || queryRaw.includes("state=")
+  )
+  if (hadOAuthNoise) clearOAuthParamsFromUrl()
 
   if (error) {
     return {
       provider: state === "google" ? "google" : "auth0",
       error,
       errorDescription: errorDescription.replace(/\+/g, " "),
+    }
+  }
+
+  if (code && !accessToken && !idToken) {
+    return {
+      provider: state === "google" ? "google" : "auth0",
+      error: "unsupported_response",
+      errorDescription:
+        "Auth0 returned an authorization code, but this app expects tokens in the URL. " +
+        "In Auth0 → Applications → MEAN-MultiChat → Settings → Advanced → Grant Types, " +
+        "enable Implicit, and set Application Type to Single Page Application. " +
+        "Allowed Callback URLs must include " +
+        `${appOrigin()}/login`,
     }
   }
 

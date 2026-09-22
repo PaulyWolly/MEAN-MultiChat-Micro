@@ -3,13 +3,10 @@
  * Gateway: /api/personal-info → this process :4809
  * Auth (login/users) stays on auth-service — this owns profile facts only.
  */
-const path = require('path');
+require('../../loadEnv')(require('dotenv'), __dirname);
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
-
-require('dotenv').config({ path: path.join(__dirname, '../../server/.env') });
-require('dotenv').config({ path: path.join(__dirname, '.env'), override: true });
 
 const { resolveMongoUri } = require('./mongoDnsFallback');
 const personalInfoRoutes = require('./routes/personal-info.routes');

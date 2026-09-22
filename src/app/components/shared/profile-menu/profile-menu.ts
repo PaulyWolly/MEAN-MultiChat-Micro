@@ -6,10 +6,11 @@ import { fetchAllPersonalInfo, savePersonalInfoType } from '../../../services/ap
 import { SERVER_VOICES, saveVoiceId, speakText } from '../speech/speech';
 import { firstNameFromProfile, initialsFromProfile } from '../profile/profile-image';
 import { MyProfileModalComponent } from '../profile/my-profile-modal';
+import { ModalCloseButtonComponent } from '../modal-close-button/modal-close-button';
 
 @Component({
   selector: 'app-profile-menu',
-  imports: [RouterLink, MyProfileModalComponent],
+  imports: [RouterLink, MyProfileModalComponent, ModalCloseButtonComponent],
   templateUrl: './profile-menu.html',
 })
 export class ProfileMenuComponent {

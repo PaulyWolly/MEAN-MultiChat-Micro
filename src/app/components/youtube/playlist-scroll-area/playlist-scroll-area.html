@@ -1,0 +1,17 @@
+<div
+  #viewport
+  class="playlist-scroll-area__viewport"
+  [class]="viewportClass()"
+  [attr.aria-label]="ariaLabel() || null"
+>
+  <ng-content />
+</div>
+<div class="playlist-scroll-area__rail" aria-hidden="true">
+  @if (thumbVisible()) {
+    <div
+      class="playlist-scroll-area__thumb"
+      [style.top.px]="thumbTop()"
+      [style.height.px]="thumbHeight()"
+    ></div>
+  }
+</div>

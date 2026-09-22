@@ -68,29 +68,29 @@
       </div>
     }
 
+    @if (!oauthBusy() && step() === 'social') {
+      <div class="login-form-panel">
+        <h2>Google / Auth0 sign-in</h2>
+        @if (error()) {
+          <p class="chat-error">{{ error() }}</p>
+        } @else {
+          <p class="hint">Social login did not finish. Try again.</p>
+        }
+        <p class="hint">
+          <button type="button" class="linkish-button" (click)="error.set(''); step.set('chooser')">
+            ← Choose a different sign-in method
+          </button>
+        </p>
+        <p class="hint">
+          <button type="button" class="secondary-button" (click)="googleLogin()">Try Google again</button>
+        </p>
+      </div>
+    }
+
     @if (!oauthBusy() && step() === 'chooser') {
       <div class="login-form-panel">
         <h2>Welcome</h2>
         <p class="hint">Choose a sign-in method to continue. Guest access is limited to Chat, Images, and About.</p>
-      </div>
-    }
-
-    @if (step() === 'social' && !oauthBusy()) {
-      <div class="login-form-panel">
-        <h2>Sign-in issue</h2>
-        @if (error()) {
-          <p class="chat-error">{{ error() }}</p>
-        } @else {
-          <p class="hint">Social sign-in did not complete.</p>
-        }
-        <div class="feature-form stacked">
-          <button type="button" class="secondary-button" (click)="error.set(''); step.set('chooser')">
-            ← Try another sign-in method
-          </button>
-          <button type="button" class="secondary-button" (click)="googleLogin()">
-            Retry Google sign-in
-          </button>
-        </div>
       </div>
     }
 

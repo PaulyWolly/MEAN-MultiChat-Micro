@@ -1,3 +1,6 @@
+@import "bootstrap/dist/css/bootstrap-grid.min.css";
+@import "bootstrap/dist/css/bootstrap-utilities.min.css";
+
 /* Bundled for Render / any host that does not have the OS font installed. */
 @font-face {
   font-family: "01 digitall regular";
@@ -93,6 +96,9 @@ app-root {
   margin: 0;
   text-align: center;
   border-inline: none;
+  /* svh = visible UI chrome; dvh can extend past the fold and clip the copyright bar */
+  height: 100%;
+  max-height: 100%;
   height: 100svh;
   max-height: 100svh;
   display: flex;
@@ -158,6 +164,18 @@ code {
   overflow: hidden;
 }
 
+/* Custom-element hosts must be block flex items or the copyright bar floats up. */
+app-header,
+app-footer {
+  display: block;
+  flex: 0 0 auto;
+  width: 100%;
+}
+
+app-footer {
+  margin-top: auto;
+}
+
 .app-body {
   flex: 1;
   min-height: 0;
@@ -192,6 +210,29 @@ code {
   width: 100%;
   margin-top: auto;
 }
+
+/* Chat host: messages fill leftover height; compose bar stays on screen. */
+.chat-route {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  overflow: hidden;
+}
+
+.chat-route > .app-content {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.chat-route > .app-footer {
+  flex-shrink: 0;
+  margin-top: auto;
+}
+
+
 
 /*
  * Shared control sizing — all primary text / icon buttons match YouTube toolbar.
@@ -429,9 +470,24 @@ h2.header-page-title {
 
 .profile-dropdown-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
-  padding: 4px 4px 8px;
+  padding: 4px 36px 8px 4px; /* room for corner close */
+}
+
+.profile-dropdown-header .profile-dropdown-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Pin × to the dropdown card’s top-right corner */
+.profile-dropdown > .profile-dropdown-header app-modal-close-button {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 1;
+  margin: 0;
+  flex-shrink: 0;
 }
 
 .profile-dropdown-avatar-wrap {
@@ -940,10 +996,35 @@ h2.header-page-title {
  * Brand logo — DO NOT change unless the user explicitly asks.
  * Light: blue text + blue border. Dark: white text + blue border only.
  */
+/*
+ * Brand logo — DO NOT change unless the user explicitly asks.
+ * Light: blue text + blue border. Dark: white text + blue border only.
+ */
+.header-logo {
+  display: inline-block;
+  max-width: 100%;
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.header-logo:hover,
+.header-logo:focus-visible {
+  text-decoration: none;
+  color: inherit;
+}
+
+
 .header-brand {
   display: inline-block;
   width: 375px;
   margin: 0 0 8px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.header-menu-toggle {
+  display: none;
 }
 
 .header-text h1 {
@@ -974,7 +1055,7 @@ h2.header-page-title {
   margin: 0;
   padding: 0 5px;
   font-family: system-ui, sans-serif;
-  font-size: 8px;
+  font-size: 6px;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -1542,6 +1623,15 @@ h2.header-page-title {
 }
 
 .youtube-toolbar-btn {
+  flex: 0 0 auto;
+}
+
+.youtube-toolbar-actions,
+.recipes-toolbar-actions,
+.jokes-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   flex: 0 0 auto;
 }
 
@@ -3004,11 +3094,10 @@ a.image-generate-download {
   outline-offset: 2px;
 }
 
-.image-describe-preview-frame, p {
+.image-describe-preview-frame {
   width: auto;
   max-width: 100%;
   align-self: center;
-  margin-right: 150px !important;
 }
 
 .image-describe-preview-frame .image-expandable-media img {
@@ -4009,11 +4098,137 @@ a.image-generate-download {
   }
 }
 
+.playlist-scroll-area {
+  position: relative;
+  box-sizing: border-box;
+  display: block;
+  min-height: 0;
+}
+
+.playlist-scroll-area__viewport {
+  overflow-x: hidden;
+  overflow-y: scroll;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+  box-sizing: border-box;
+  height: 100%;
+  min-height: 0;
+}
+
+.playlist-scroll-area__viewport::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.playlist-scroll-area__rail {
+  position: absolute;
+  right: 3px;
+  top: 8px;
+  bottom: 8px;
+  width: 14px;
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--text) 16%, transparent);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.playlist-scroll-area__thumb {
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--text) 58%, transparent);
+  min-height: 36px;
+}
+
+/* Host is .playlist-scroll-area (Angular host: class) — same as MERN root node */
+.playlists-container.playlist-scroll-area,
+app-playlist-scroll-area.playlists-container {
+  width: 100%;
+  height: 130px;
+  max-height: 130px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--social-bg);
+  padding: 0;
+}
+
+.playlists-container .playlist-scroll-area__viewport,
+app-playlist-scroll-area.playlists-container .playlist-scroll-area__viewport {
+  height: 100%;
+  max-height: 100%;
+  padding: 6px 4px 6px 6px;
+}
+
+.playlist-videos-scroll.playlist-scroll-area,
+app-playlist-scroll-area.playlist-videos-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--social-bg);
+  align-self: stretch;
+}
+
+.playlist-videos-scroll .playlist-scroll-area__viewport,
+app-playlist-scroll-area.playlist-videos-scroll .playlist-scroll-area__viewport {
+  /* Absolute fill so flex-sized host always clips and scrolls */
+  position: absolute;
+  inset: 0;
+  height: auto;
+  max-height: none;
+  padding: 6px 4px 6px 6px;
+}
+
+.playlist-sort-bar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.playlist-sort-btn {
+  font: inherit;
+  font-size: 13px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text-h);
+  cursor: pointer;
+  flex: 1;
+  min-width: 7rem;
+}
+
+.playlist-sort-btn:hover {
+  background: var(--accent-bg);
+  color: var(--accent);
+}
+
+.playlist-sort-btn.is-active {
+  border-color: var(--accent-border);
+  background: var(--accent);
+  color: #08060d;
+  font-weight: 700;
+}
+
+.playlist-sort-btn.is-active:hover {
+  background: #9bbcf5;
+  color: #000;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.16);
+}
+
+
 .playlists-pane {
   display: flex;
   flex-direction: column;
   gap: 8px;
   min-width: 0;
+  width: 100%;
 }
 
 .playlists-container {
@@ -4899,6 +5114,90 @@ a.image-generate-download {
   background: transparent;
 }
 
+/* YouTube results: match playlist videos scrollbar width */
+.youtube-page .youtube-results-scroll {
+  scrollbar-width: auto;
+  scrollbar-color: color-mix(in srgb, var(--text) 45%, transparent) var(--social-bg);
+}
+
+.youtube-page .youtube-results-scroll::-webkit-scrollbar {
+  width: 14px;
+}
+
+.youtube-page .youtube-results-scroll::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--text) 40%, transparent);
+  border-radius: 8px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+
+.youtube-page .youtube-results-scroll::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--text) 55%, transparent);
+  background-clip: padding-box;
+  border: 3px solid transparent;
+}
+
+.youtube-page .youtube-results-scroll::-webkit-scrollbar-track {
+  background: var(--social-bg);
+  border-radius: 8px;
+}
+
+/* Recipes results: same scrollbar as YouTube / playlist videos */
+.recipes-page .recipes-results-scroll {
+  scrollbar-width: auto;
+  scrollbar-color: color-mix(in srgb, var(--text) 45%, transparent) var(--social-bg);
+}
+
+.recipes-page .recipes-results-scroll::-webkit-scrollbar {
+  width: 14px;
+}
+
+.recipes-page .recipes-results-scroll::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--text) 40%, transparent);
+  border-radius: 8px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+
+.recipes-page .recipes-results-scroll::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--text) 55%, transparent);
+  background-clip: padding-box;
+  border: 3px solid transparent;
+}
+
+.recipes-page .recipes-results-scroll::-webkit-scrollbar-track {
+  background: var(--social-bg);
+  border-radius: 8px;
+}
+
+/* Jokes results: same scrollbar as YouTube / Recipes */
+.jokes-page .jokes-results-scroll {
+  scrollbar-width: auto;
+  scrollbar-color: color-mix(in srgb, var(--text) 45%, transparent) var(--social-bg);
+}
+
+.jokes-page .jokes-results-scroll::-webkit-scrollbar {
+  width: 14px;
+}
+
+.jokes-page .jokes-results-scroll::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--text) 40%, transparent);
+  border-radius: 8px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+
+.jokes-page .jokes-results-scroll::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--text) 55%, transparent);
+  background-clip: padding-box;
+  border: 3px solid transparent;
+}
+
+.jokes-page .jokes-results-scroll::-webkit-scrollbar-track {
+  background: var(--social-bg);
+  border-radius: 8px;
+}
+
 /*
  * Scrollable data tables: only the table region scrolls.
  * App header / page chrome stay put; column headers stick inside the region.
@@ -5410,24 +5709,29 @@ a.image-generate-download {
   box-sizing: border-box;
   width: 100%;
   max-width: 100%;
-  overflow: hidden;
+  /* Clip horizontal bleed only — vertical clip hid Send/History/Clear on short phone views */
+  overflow-x: hidden;
+  overflow-y: visible;
 }
 
 /* Branding bar under every route (matches header chrome) */
 .app-site-footer {
   margin-top: auto;
-  padding: 0px 16px 6px;
+  padding: 4px 16px 6px;
   border-top: 1px solid var(--border);
   flex-shrink: 0;
   background: var(--header-footer-bg);
   color: var(--header-footer-text);
   z-index: 2;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 2.75rem;
 }
 
-/* Chat compose already drew the top rule — don't double it */
-.app-footer + .app-site-footer {
-  border-top: none;
-  padding-top: 0;
+/* Chat compose already drew the top rule — keep a light separator for the copyright bar */
+.app-body:has(.chat-route) + app-footer .app-site-footer {
+  border-top: 1px solid var(--border);
+  padding-top: 4px;
 }
 
 .chat-input-area {
@@ -5472,7 +5776,7 @@ a.image-generate-download {
   min-height: 24px;
   width: 100%;
   min-width: 0;
-  margin-bottom: 10px
+  margin-bottom: 4px;
 }
 
 .conversation-row .conversation-checkbox,
@@ -5928,7 +6232,7 @@ a.image-generate-download {
 }
 
 .app-site-footer .footer-note {
-  margin: 8px 0 0;
+  margin: 6px 0 2px;
   color: var(--header-footer-text);
 }
 
@@ -6459,3 +6763,778 @@ a.image-generate-download {
   opacity: 0.55;
   cursor: not-allowed;
 }
+
+/*
+ * Mobile layout — Bootstrap 5 breakpoints:
+ *   sm 576px | md 768px | lg 992px | xl 1200px | xxl 1400px
+ * Grid/utilities come from bootstrap-grid + bootstrap-utilities (no Reboot).
+ */
+.header-brand-row {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.nav-toggle {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--control-radius);
+  background: var(--accent-bg);
+  color: var(--header-footer-text);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.nav-toggle-bar {
+  display: block;
+  width: 16px;
+  height: 2px;
+  background: currentColor;
+  border-radius: 1px;
+}
+
+.nav-toggle[aria-expanded="true"] {
+  border-color: var(--accent-border);
+  background: var(--accent-bg);
+}
+
+.app-header {
+  padding-top: max(8px, env(safe-area-inset-top));
+  padding-left: max(10px, env(safe-area-inset-left));
+  padding-right: max(10px, env(safe-area-inset-right));
+}
+
+.app-site-footer {
+  padding-bottom: max(6px, env(safe-area-inset-bottom, 0px));
+}
+
+@media (max-width: 991.98px) {
+  .nav-toggle {
+    display: inline-flex;
+  }
+
+  .header-text h1 .header-micro-label {
+    font-size: 0.3375em;
+  }
+
+  .app-header {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "brand actions";
+    gap: 8px 12px;
+    padding: 8px 12px;
+    align-items: start;
+  }
+
+  .header-text {
+    grid-area: brand;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .header-actions {
+    grid-area: actions;
+    align-self: start;
+    flex-wrap: nowrap;
+    gap: 16px;
+    min-height: 36px;
+  }
+
+  .header-text h1 {
+    width: auto;
+    max-width: 100%;
+    min-height: 36px;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    font-size: clamp(1.15rem, 6.5vw, 2rem);
+    padding: 4px 10px 5px;
+    margin: 0;
+    line-height: 1.15;
+  }
+
+  .header-page-title,
+  h2.header-page-title {
+    display: none;
+  }
+
+  .main-nav {
+    display: none;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+    width: 100%;
+    padding: 8px 0 4px;
+  }
+
+  .main-nav.is-open {
+    display: flex;
+  }
+
+  .nav-ai-group {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 2px;
+    padding: 8px;
+  }
+
+  .nav-ai-sep,
+  .nav-pipe {
+    display: none;
+  }
+
+  .main-nav a {
+    display: block;
+    padding: 8px 10px;
+    border-bottom: none;
+    border-radius: 8px;
+    font-size: 15px;
+  }
+
+  .main-nav a.active {
+    background: var(--accent-bg);
+    border-bottom: none;
+  }
+
+  .app-content {
+    padding: 8px 12px 6px;
+  }
+
+  .youtube-page.feature-page {
+    padding: 6px 10px 4px;
+  }
+
+  .youtube-intro-hint {
+    display: none;
+  }
+
+  .youtube-toolbar {
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .youtube-search-form.feature-form {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    flex: 1 1 100%;
+    width: 100%;
+    min-width: 0;
+    gap: 6px;
+  }
+
+  .youtube-toolbar-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+    gap: 6px;
+  }
+
+  .youtube-toolbar-btn {
+    width: 100%;
+    min-width: 0;
+    padding: 0 8px;
+  }
+
+  .recipes-page.feature-page {
+    padding: 6px 10px 4px;
+  }
+
+  .recipes-intro-hint {
+    display: none;
+  }
+
+  .recipes-toolbar {
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .recipes-search-form.feature-form {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    flex: 1 1 100%;
+    width: 100%;
+    min-width: 0;
+    gap: 6px;
+  }
+
+  .recipes-toolbar-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+    gap: 6px;
+  }
+
+  .recipes-toolbar-btn {
+    width: 100%;
+    min-width: 0;
+    padding: 0 8px;
+  }
+
+  .jokes-page.feature-page {
+    padding: 6px 10px 4px;
+  }
+
+  .jokes-intro-hint {
+    display: none;
+  }
+
+  .jokes-toolbar {
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .jokes-search-form.feature-form {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    flex: 1 1 100%;
+    width: 100%;
+    min-width: 0;
+    gap: 6px;
+  }
+
+  .jokes-toolbar-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+    gap: 6px;
+  }
+
+  .jokes-toolbar-btn {
+    width: 100%;
+    min-width: 0;
+    padding: 0 8px;
+  }
+
+  .jokes-compose-content {
+    min-height: 2.75rem;
+    max-height: 6.5rem;
+    font-size: 16px;
+  }
+
+  .youtube-results-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    margin: 0 0 6px;
+  }
+
+  .youtube-results-heading {
+    width: 100%;
+  }
+
+  .youtube-pager {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .youtube-pager .pager-label {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .youtube-search-form .clearable-input input {
+    font-size: 16px;
+  }
+
+  .youtube-results-scroll {
+    margin-right: 0;
+  }
+
+  .youtube-card-title {
+    font-size: 13px;
+    padding: 0 8px;
+  }
+
+  .youtube-card-channel,
+  .youtube-watch-link {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  .youtube-player-overlay {
+    padding: 0;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .youtube-player-panel {
+    width: 100%;
+    max-width: 100%;
+    height: 100%;
+    max-height: 100dvh;
+    border-radius: 0;
+  }
+
+  .login-page {
+    overflow: auto;
+    align-items: stretch;
+    padding-bottom: 12px;
+  }
+
+  .login-form-panel {
+    margin: 12px auto;
+    max-width: 100%;
+    padding: 14px 14px;
+  }
+
+  .confirm-modal-container.login-method-modal-overlay {
+    align-items: flex-start;
+    justify-content: center;
+    height: 100dvh;
+    max-height: 100dvh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom));
+    box-sizing: border-box;
+  }
+
+  .login-method-modal,
+  .confirm-modal-container.login-method-modal-overlay .confirm-modal-content {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    max-height: none;
+    margin: 0;
+  }
+
+  .login-method-lead {
+    bottom: 0;
+    margin-bottom: 10px;
+  }
+
+  .login-method-choice {
+    padding: 10px 12px;
+  }
+
+  .confirm-modal-header {
+    padding: 12px 12px 8px 14px;
+  }
+
+  .confirm-modal-body.login-method-body {
+    padding: 12px 14px 16px;
+  }
+
+  .chat-page .message-list {
+    padding: 8px 12px 12px;
+  }
+
+  .chat-page .message-list.empty {
+    justify-content: flex-start;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    gap: 6px;
+  }
+
+  .chat-page .message-list.empty p {
+    margin: 0;
+  }
+
+  .app-footer {
+    padding: 6px 10px 4px;
+  }
+
+  .conversation-row {
+    flex-wrap: nowrap;
+    gap: 8px;
+  }
+
+  /* Default hint truncates on phone and steals width from the row */
+  .conversation-row .status-line {
+    display: none;
+  }
+
+  .chat-input-form {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .chat-input-form .chat-input-clearable {
+    flex: 1 1 100%;
+  }
+
+  .chat-input {
+    font-size: 16px;
+    padding: 10px 12px;
+  }
+
+  .feature-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .feature-form input,
+  .feature-form textarea,
+  .feature-form select {
+    width: 100%;
+    max-width: 100%;
+    font-size: 16px;
+  }
+
+  .footer-note {
+    font-size: 11px;
+    padding: 0 6px;
+    line-height: 1.35;
+    margin: 4px 0 2px;
+  }
+
+  .app-site-footer {
+    min-height: 2.5rem;
+    padding: 4px 10px 6px;
+    /* Keep copyright visually separate from the chat compose chrome */
+    box-shadow: 0 -1px 0 var(--border);
+  }
+
+  .app-site-footer .footer-note {
+    overflow: visible;
+    display: block;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .profile-welcome {
+    display: none;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .header-text h1 {
+    font-size: clamp(1rem, 6vw, 1.45rem);
+    border-width: 2px;
+  }
+
+  .chat-input-form .send-button,
+  .chat-input-form .clear-chat-button,
+  .chat-input-form .chat-history-btn {
+    flex: 1 1 auto;
+  }
+}
+
+/* YouTube / Recipes mobile chrome — after .feature-form column so search stays one row. */
+@media (max-width: 991.98px) {
+  .youtube-page .youtube-search-form.feature-form,
+  .recipes-page .recipes-search-form.feature-form {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+  }
+
+  .youtube-page .youtube-toolbar-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .youtube-page .youtube-toolbar-btn {
+    width: 100%;
+  }
+
+  .recipes-page .recipes-toolbar-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .recipes-page .recipes-toolbar-btn {
+    width: 100%;
+  }
+
+  .youtube-page .youtube-intro-hint,
+  .recipes-page .recipes-intro-hint,
+  .jokes-page .jokes-intro-hint {
+    display: none;
+  }
+
+  .jokes-page .jokes-search-form.feature-form {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+  }
+
+  .jokes-page .jokes-toolbar-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .jokes-page .jokes-toolbar-btn {
+    width: 100%;
+  }
+
+  .youtube-page .youtube-video-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* Playlist Manager — phone: full-bleed, scrollable, touch-friendly */
+  .playlist-manager-backdrop {
+    padding: 0;
+    align-items: stretch;
+    justify-content: stretch;
+  }
+
+  .playlist-manager-modal {
+    width: 100%;
+    max-width: 100%;
+    height: 100dvh;
+    max-height: 100dvh;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+
+  .playlist-manager-header {
+    padding: 10px 12px;
+    padding-top: max(10px, env(safe-area-inset-top, 0px));
+    flex-shrink: 0;
+  }
+
+  .playlist-manager-header h3 {
+    font-size: 16px;
+  }
+
+  .playlist-manager-body {
+    padding: 10px 12px max(12px, env(safe-area-inset-bottom, 0px));
+    overflow: hidden;
+    gap: 10px;
+  }
+
+  .playlist-controls-row {
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 0;
+    flex-shrink: 0;
+  }
+
+  .playlist-controls-row .clearable-input,
+  .playlist-create-form,
+  .playlist-search-input,
+  .playlist-create-form input {
+    min-width: 0;
+    width: 100%;
+    flex: 1 1 auto;
+  }
+
+  .playlist-create-form {
+    flex-wrap: nowrap;
+    gap: 8px;
+  }
+
+  .playlist-create-form input {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .playlist-create-form button {
+    width: auto;
+    flex: 0 0 auto;
+    white-space: nowrap;
+    padding-inline: 12px;
+  }
+
+  .playlist-create-label-full {
+    display: none;
+  }
+
+  .playlist-create-label-short {
+    display: inline;
+  }
+
+  .playlist-manager-row {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    margin-bottom: 0;
+    flex: 0 0 auto;
+    width: 100%;
+  }
+
+  .playlists-pane {
+    gap: 8px;
+    width: 100%;
+    align-self: stretch;
+  }
+
+  app-playlist-scroll-area.playlists-container,
+  .playlists-container.playlist-scroll-area,
+  .playlists-container {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .playlist-sort-bar {
+    width: 100%;
+    gap: 6px;
+  }
+
+  .playlist-sort-btn {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 8px 6px;
+    font-size: 12px;
+  }
+
+  .pending-video-container {
+    height: auto;
+    max-height: none;
+    min-height: 0;
+    padding: 8px;
+  }
+
+  .pending-video {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .pending-video .drag-icon {
+    display: none;
+  }
+
+  .pending-video img {
+    width: 64px;
+    height: 36px;
+  }
+
+  .pending-video-meta {
+    min-width: 0;
+    flex: 1 1 calc(100% - 80px);
+    font-size: 13px;
+  }
+
+  .pending-add-btn {
+    width: 100%;
+    flex: 1 1 100%;
+  }
+
+  .pending-video-hint-desktop,
+  .pending-placeholder-desktop {
+    display: none;
+  }
+
+  .pending-video-hint-mobile,
+  .pending-placeholder-mobile {
+    display: inline;
+  }
+
+  .pending-placeholder {
+    font-size: 13px;
+    line-height: 1.35;
+  }
+
+  .current-playlist-panel {
+    margin-top: 0;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .current-playlist-header {
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .current-playlist-header h4 {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-size: 15px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .current-playlist-header .playlist-delete-icon {
+    flex-shrink: 0;
+    width: auto;
+  }
+
+  app-playlist-scroll-area.playlists-container,
+  .playlists-container.playlist-scroll-area,
+  .playlists-container {
+    height: clamp(96px, 16vh, 140px);
+    max-height: clamp(96px, 16vh, 140px);
+  }
+
+  app-playlist-scroll-area.playlist-videos-scroll,
+  .playlist-videos-scroll.playlist-scroll-area,
+  .playlist-videos-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: none;
+    overscroll-behavior: contain;
+  }
+
+  .playlist-video-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    padding: 10px 0;
+  }
+
+  .playlist-video-play {
+    flex: 1 1 auto;
+    width: 100%;
+  }
+
+  .playlist-play-hint {
+    display: none;
+  }
+
+  .playlist-video-title {
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+
+  .playlist-video-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .playlist-video-row > .playlist-video-actions .youtube-watch-link {
+    grid-column: 1 / -1;
+    width: 100%;
+    margin: 0;
+    text-align: center;
+    font-size: 12px;
+    padding: 8px 6px;
+    box-sizing: border-box;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg);
+    text-decoration: none;
+  }
+
+  .playlist-video-row > .playlist-video-actions .playlist-move-label {
+    min-width: 0;
+    margin: 0;
+  }
+
+  .playlist-video-row .playlist-move-select {
+    width: 100%;
+    max-width: none;
+  }
+
+  .playlist-video-row > .playlist-video-actions .youtube-history-delete {
+    width: 100%;
+    padding: 8px 10px;
+  }
+}
+

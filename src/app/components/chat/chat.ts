@@ -23,6 +23,7 @@ import {
   abortAllSpeechRecognition,
   getSavedVoiceId,
   isSpokenAudioComplete,
+  listenResumeDelayMs,
   onSpokenAudioComplete,
   speakText,
   stopSpeaking,
@@ -357,9 +358,10 @@ export class ChatComponent implements OnDestroy {
     const trimmed = String(text || '').trim();
     const image = this.attachment?.dataUrl;
     const imageName = this.attachment?.fileName;
-    if ((!trimmed && !image) || this.loading()) return;
+    if (!trimmed && !image) return;
     if (fromVoice && !isVoiceInputAllowed()) return;
 
+    // Exit must win even mid-turn (STT often returns "Exit.")
     if (!image && isExitPhrase(trimmed)) {
       this.draft = '';
       this.attachment = null;
@@ -373,6 +375,8 @@ export class ChatComponent implements OnDestroy {
       await this.endConversation(MESSAGES.CLOSINGS.EXIT);
       return;
     }
+
+    if (this.loading()) return;
 
     const promptText = trimmed || DESCRIBE_IMAGE_PROMPT;
     this.draft = '';
@@ -800,9 +804,10 @@ export class ChatComponent implements OnDestroy {
     }
   }
 
-  private scheduleEnterListeningMode(delayMs = 650) {
+  private scheduleEnterListeningMode(delayMs?: number) {
     this.clearListenResumeTimer();
     if (!this.conversationMode) return;
+    const delay = Math.max(delayMs ?? 0, listenResumeDelayMs());
     this.listenResumeTimer = setTimeout(() => {
       this.listenResumeTimer = null;
       if (
@@ -813,7 +818,7 @@ export class ChatComponent implements OnDestroy {
       ) {
         void this.mic.enterListeningMode();
       }
-    }, delayMs);
+    }, delay);
   }
 
   private uid() {

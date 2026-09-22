@@ -26,6 +26,7 @@ import { AuthService } from '../../services/auth.service';
 import { ClearableInputComponent } from '../shared/clearable-input/clearable-input';
 import { ConfirmModalComponent } from '../shared/confirm-modal/confirm-modal';
 import { ModalCloseButtonComponent } from '../shared/modal-close-button/modal-close-button';
+import { PlaylistScrollAreaComponent } from './playlist-scroll-area/playlist-scroll-area';
 import {
   PLAYLIST_HINT_MATCH_MIN,
   getPlaylistVisibleName,
@@ -87,7 +88,12 @@ function playlistActivityTime(playlist: any, secondCounts: Map<string, number>) 
 
 @Component({
   selector: 'app-playlist-manager-modal',
-  imports: [ClearableInputComponent, ModalCloseButtonComponent, ConfirmModalComponent],
+  imports: [
+    ClearableInputComponent,
+    ModalCloseButtonComponent,
+    ConfirmModalComponent,
+    PlaylistScrollAreaComponent,
+  ],
   templateUrl: './playlist-manager-modal.html',
 })
 export class PlaylistManagerModalComponent implements AfterViewInit, OnDestroy {
@@ -272,25 +278,6 @@ export class PlaylistManagerModalComponent implements AfterViewInit, OnDestroy {
     }
   }
 
-  /** Play in-app and mark this playlist as most recent for next open. */
-  async playFromPlaylist(videoId: string) {
-    const id = this.selectedId();
-    if (id) {
-      try {
-        const data = await touchPlaylist(id);
-        const updated = data?.playlist;
-        if (updated?._id) {
-          this.playlists.update((list) =>
-            list.map((p) => (p._id === updated._id ? { ...p, ...updated } : p)),
-          );
-        }
-      } catch {
-        // Still play even if activity stamp fails.
-      }
-    }
-    this.playVideo.emit(String(videoId || ''));
-  }
-
   private maybeAutoSelect(
     isOpen: boolean,
     loading: boolean,
@@ -384,6 +371,25 @@ export class PlaylistManagerModalComponent implements AfterViewInit, OnDestroy {
     this.message.set(text);
     if (this.messageTimer) window.clearTimeout(this.messageTimer);
     this.messageTimer = window.setTimeout(() => this.message.set(''), 3500);
+  }
+
+  /** Touch activity stamp, then emit play so parent can open the in-app player. */
+  async playFromPlaylist(videoId: string) {
+    const id = this.selectedId();
+    if (id) {
+      try {
+        const data = await touchPlaylist(id);
+        const updated = data?.playlist;
+        if (updated?._id) {
+          this.playlists.update((list) =>
+            list.map((p) => (p._id === updated._id ? { ...p, ...updated } : p)),
+          );
+        }
+      } catch {
+        // Still play even if activity stamp fails.
+      }
+    }
+    this.playVideo.emit(String(videoId || ''));
   }
 
   async handleCreate(event: Event) {

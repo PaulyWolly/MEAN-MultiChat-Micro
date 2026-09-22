@@ -5,6 +5,8 @@
         <app-voice-mic-button (transcript)="onVoice($event)" (failed)="toast.show($event, 'error')" [disabled]="loading()" />
         <app-clearable-input [value]="prompt()" (valueChange)="prompt.set($event)" placeholder="e.g. lemon chicken pasta — or use Mic" ariaLabel="Recipe request" />
         <app-search-icon-button [loading]="loading()" [disabled]="loading()" />
+      </form>
+      <div class="recipes-toolbar-actions">
         <button type="button" class="secondary-button recipes-toolbar-btn" (click)="print()" [disabled]="!recipeText()">Print</button>
         <button
           type="button"
@@ -15,7 +17,7 @@
         >
           {{ speaking() ? 'Stop reading' : 'Read aloud' }}
         </button>
-      </form>
+      </div>
     </div>
     <p class="hint recipes-intro-hint">
       Type a dish or use <strong>Mic</strong>. Search generates a recipe — then <strong>Print</strong> or
@@ -23,7 +25,10 @@
     </p>
   </div>
 
-  <div class="page-scroll">
+  <div class="page-scroll recipes-results-scroll">
+    @if (loading() && !recipeText()) {
+      <p class="hint">Generating recipe…</p>
+    }
     @if (recipeText()) {
       <div class="recipe-print-root">
         <div class="recipe-with-image-fallback">

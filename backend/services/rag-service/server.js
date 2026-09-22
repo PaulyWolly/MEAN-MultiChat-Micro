@@ -2,7 +2,7 @@
  * RAG microservice — Phase 2 peel from the Express monolith.
  * Public path stays /api/rag via the gateway (port 4800 → this process :4802).
  */
-const path = require('path');
+require('../../loadEnv')(require('dotenv'), __dirname);
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
@@ -10,10 +10,6 @@ const { resolveMongoUri } = require('./mongoDnsFallback');
 const { authenticateToken } = require('./middleware/auth');
 const { logAiLimits } = require('./lib/aiLimits');
 const ragRoutes = require('./routes/rag.routes');
-
-// Load monolith .env first (shared secrets), then local overrides.
-require('dotenv').config({ path: path.join(__dirname, '../../server/.env') });
-require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const PORT = Number(process.env.PORT) || 4802;
 const CORS_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:4200';

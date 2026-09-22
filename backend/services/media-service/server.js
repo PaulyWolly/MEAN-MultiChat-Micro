@@ -2,15 +2,11 @@
  * Media microservice — YouTube + playlists + image-search peel from the Express monolith.
  * Gateway: /api/youtube + /api/playlists + /api/image-search + /api/image-proxy → :4805
  */
-const path = require('path');
+// Must run before youtube.routes (it reads GOOGLE_API_KEY at require time).
+require('../../loadEnv')(require('dotenv'), __dirname);
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
-
-// Load monolith .env first (shared secrets), then local overrides (PORT/CORS).
-// Must run before youtube.routes (it reads GOOGLE_API_KEY at require time).
-require('dotenv').config({ path: path.join(__dirname, '../../server/.env') });
-require('dotenv').config({ path: path.join(__dirname, '.env'), override: true });
 
 const { resolveMongoUri } = require('./mongoDnsFallback');
 const playlistRoutes = require('./routes/playlists.routes');

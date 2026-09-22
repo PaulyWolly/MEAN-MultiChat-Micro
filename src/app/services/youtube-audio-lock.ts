@@ -67,12 +67,26 @@ export function isYouTubeAudioLocked() {
   }
 }
 
-/** True only when chat is allowed to listen (focused Chat tab, no YouTube). */
+function isTouchChromeFocusUnreliable() {
+  if (typeof navigator === 'undefined') return false
+  const ua = navigator.userAgent || ''
+  // Android/iOS Chrome often reports hasFocus() === false while the page is
+  // visible (URL bar, speech UI). That was dropping every spoken turn.
+  return /Android/i.test(ua) || /iPhone|iPad|iPod/i.test(ua)
+}
+
+/** True only when chat is allowed to listen (visible Chat tab, no YouTube). */
 export function isVoiceInputAllowed() {
   if (typeof document === 'undefined') return false
   if (isYouTubeAudioLocked()) return false
   if (document.hidden) return false
-  if (typeof document.hasFocus === 'function' && !document.hasFocus()) return false
+  if (
+    !isTouchChromeFocusUnreliable() &&
+    typeof document.hasFocus === 'function' &&
+    !document.hasFocus()
+  ) {
+    return false
+  }
   return true
 }
 

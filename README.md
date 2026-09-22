@@ -29,7 +29,7 @@ backend/server/       Express + Mongo (port 4800)
 
 ```bash
 npm install
-npm --prefix backend/server install
+npm run install:backend
 ```
 
 3. Run both processes:
