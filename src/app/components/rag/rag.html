@@ -90,7 +90,7 @@
           <form class="feature-form stacked rag-ask-form" (submit)="ask($event)">
             <textarea
               class="rag-ask-input"
-              rows="3"
+              rows="2"
               [(ngModel)]="question"
               name="ragQuestion"
               [disabled]="asking() || !canAsk()"

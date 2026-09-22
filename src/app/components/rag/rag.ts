@@ -153,6 +153,7 @@ export class RagComponent implements OnInit {
     this.answer.set('');
     this.sources.set([]);
     this.askedQuestion.set(q);
+    this.scrollAnswerIntoView();
     try {
       const result = await askRag({
         question: q,
@@ -161,10 +162,26 @@ export class RagComponent implements OnInit {
       });
       this.answer.set(result.answer || '');
       this.sources.set(result.sources || []);
+      this.scrollAnswerIntoView();
     } catch (err: any) {
       this.askError.set(err?.message || 'Ask failed');
     } finally {
       this.asking.set(false);
     }
+  }
+
+  /** On stacked (phone) layout the answer sits below the fold — bring it into view. */
+  private scrollAnswerIntoView() {
+    requestAnimationFrame(() => {
+      const el = document.querySelector('.rag-answer') as HTMLElement | null;
+      const scroller = document.querySelector('.rag-page .page-scroll') as HTMLElement | null;
+      if (!el) return;
+      if (scroller) {
+        const delta = el.getBoundingClientRect().top - scroller.getBoundingClientRect().top;
+        scroller.scrollTo({ top: Math.max(0, scroller.scrollTop + delta - 8), behavior: 'smooth' });
+        return;
+      }
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
   }
 }
