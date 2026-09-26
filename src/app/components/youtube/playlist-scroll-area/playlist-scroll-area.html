@@ -6,12 +6,20 @@
 >
   <ng-content />
 </div>
-<div class="playlist-scroll-area__rail" aria-hidden="true">
+<div
+  class="playlist-scroll-area__rail"
+  aria-hidden="true"
+  (pointerdown)="onRailPointerDown($event)"
+>
   @if (thumbVisible()) {
     <div
       class="playlist-scroll-area__thumb"
       [style.top.px]="thumbTop()"
       [style.height.px]="thumbHeight()"
+      (pointerdown)="onThumbPointerDown($event)"
+      (pointermove)="onThumbPointerMove($event)"
+      (pointerup)="endThumbDrag($event)"
+      (pointercancel)="endThumbDrag($event)"
     ></div>
   }
 </div>

@@ -4291,7 +4291,9 @@ a.image-generate-download {
   width: 14px;
   border-radius: 7px;
   background: color-mix(in srgb, var(--text) 16%, transparent);
-  pointer-events: none;
+  pointer-events: auto;
+  touch-action: none;
+  cursor: pointer;
   z-index: 1;
 }
 
@@ -4302,6 +4304,13 @@ a.image-generate-download {
   border-radius: 6px;
   background: color-mix(in srgb, var(--text) 58%, transparent);
   min-height: 36px;
+  cursor: grab;
+  touch-action: none;
+}
+
+.playlist-scroll-area.is-dragging .playlist-scroll-area__thumb {
+  cursor: grabbing;
+  background: color-mix(in srgb, var(--text) 78%, transparent);
 }
 
 /* Host is .playlist-scroll-area (Angular host: class) — same as MERN root node */

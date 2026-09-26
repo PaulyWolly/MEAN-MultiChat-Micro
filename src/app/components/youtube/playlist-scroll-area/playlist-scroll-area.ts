@@ -31,6 +31,7 @@ function measureThumb(el: HTMLElement) {
   templateUrl: './playlist-scroll-area.html',
   host: {
     class: 'playlist-scroll-area',
+    '[class.is-dragging]': 'dragging()',
   },
 })
 export class PlaylistScrollAreaComponent implements AfterViewInit, OnDestroy {
@@ -42,10 +43,14 @@ export class PlaylistScrollAreaComponent implements AfterViewInit, OnDestroy {
   readonly thumbTop = signal(0);
   readonly thumbHeight = signal(0);
   readonly thumbVisible = signal(false);
+  readonly dragging = signal(false);
 
   private ro: ResizeObserver | null = null;
   private mo: MutationObserver | null = null;
   private scrollEl: HTMLElement | null = null;
+  private dragPointerId = -1;
+  private dragStartY = 0;
+  private dragStartScroll = 0;
   private onScroll = () => this.sync();
 
   ngAfterViewInit() {
@@ -67,6 +72,53 @@ export class PlaylistScrollAreaComponent implements AfterViewInit, OnDestroy {
     this.scrollEl?.removeEventListener('scroll', this.onScroll);
     this.ro?.disconnect();
     this.mo?.disconnect();
+    this.dragging.set(false);
+  }
+
+  onThumbPointerDown(event: PointerEvent) {
+    const el = this.scrollEl;
+    if (!el || !this.thumbVisible()) return;
+    event.preventDefault();
+    event.stopPropagation();
+    this.dragging.set(true);
+    this.dragPointerId = event.pointerId;
+    this.dragStartY = event.clientY;
+    this.dragStartScroll = el.scrollTop;
+    (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+  }
+
+  onThumbPointerMove(event: PointerEvent) {
+    const el = this.scrollEl;
+    if (!this.dragging() || event.pointerId !== this.dragPointerId || !el) return;
+    event.preventDefault();
+    const maxTravel = this.thumbTravel(el);
+    const scrollRange = el.scrollHeight - el.clientHeight;
+    if (maxTravel <= 0 || scrollRange <= 0) return;
+    const dy = event.clientY - this.dragStartY;
+    el.scrollTop = this.dragStartScroll + (dy / maxTravel) * scrollRange;
+  }
+
+  endThumbDrag(event: PointerEvent) {
+    if (event.pointerId !== this.dragPointerId) return;
+    this.dragging.set(false);
+    this.dragPointerId = -1;
+  }
+
+  onRailPointerDown(event: PointerEvent) {
+    const el = this.scrollEl;
+    if (!el || !this.thumbVisible() || event.button !== 0) return;
+    const rail = event.currentTarget as HTMLElement;
+    const y = event.clientY - rail.getBoundingClientRect().top;
+    const maxTravel = this.thumbTravel(el);
+    const scrollRange = el.scrollHeight - el.clientHeight;
+    if (maxTravel <= 0 || scrollRange <= 0) return;
+    const thumbTop = Math.min(maxTravel, Math.max(0, y - this.thumbHeight() / 2));
+    el.scrollTop = (thumbTop / maxTravel) * scrollRange;
+  }
+
+  private thumbTravel(el: HTMLElement) {
+    const track = Math.max(0, el.clientHeight - 8);
+    return Math.max(1, track - this.thumbHeight());
   }
 
   private sync() {
