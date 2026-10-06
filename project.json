@@ -1,0 +1,39 @@
+{
+  "name": "mean-multichat-micro",
+  "$schema": "node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "src",
+  "targets": {
+    "serve": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "ng serve --port 4200 --proxy-config proxy.conf.json",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "ng build",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "ng test",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "dev-stack": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": ["nx run monolith:serve-dev", "nx serve mean-multichat-micro"],
+        "parallel": true,
+        "cwd": "{workspaceRoot}"
+      }
+    }
+  },
+  "tags": ["type:app", "scope:frontend"]
+}
+

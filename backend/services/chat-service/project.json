@@ -1,0 +1,19 @@
+{
+  "name": "chat",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "backend/services/chat-service",
+  "targets": {
+    "serve": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "cross-env PORT=4804 node server.js",
+        "cwd": "backend/services/chat-service"
+      }
+    }
+  },
+  "tags": [
+    "type:service",
+    "scope:backend"
+  ]
+}

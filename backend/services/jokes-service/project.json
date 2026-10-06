@@ -1,0 +1,19 @@
+{
+  "name": "jokes",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "backend/services/jokes-service",
+  "targets": {
+    "serve": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "cross-env PORT=4807 node server.js",
+        "cwd": "backend/services/jokes-service"
+      }
+    }
+  },
+  "tags": [
+    "type:service",
+    "scope:backend"
+  ]
+}

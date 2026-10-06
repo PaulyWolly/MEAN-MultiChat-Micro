@@ -1,0 +1,26 @@
+{
+  "name": "monolith",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "backend/server",
+  "targets": {
+    "serve": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "cross-env PORT=4810 node server.js",
+        "cwd": "backend/server"
+      }
+    },
+    "serve-dev": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "cross-env PORT=4800 npm run dev",
+        "cwd": "backend/server"
+      }
+    }
+  },
+  "tags": [
+    "type:service",
+    "scope:backend"
+  ]
+}
