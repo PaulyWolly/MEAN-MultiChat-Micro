@@ -1050,7 +1050,7 @@ h2.header-page-title {
   position: absolute;
   right: 16px;
   /* Sit on the bottom border (vertical center of the label = border line). */
-  bottom: 0;
+  bottom: -1px;
   transform: translateY(50%);
   display: inline-block;
   margin: 0;
