@@ -75,13 +75,17 @@
         </div>
       </div>
 
-      @if (loadError() && items().length === 0) {
+      @if (loading()) {
+        <p class="youtube-history-empty">Loading saved history from MongoDB…</p>
+      }
+      @if (loadError()) {
         <p class="youtube-history-empty">{{ loadError() }}</p>
-      } @else if (items().length === 0) {
+      }
+      @if (!loading() && !loadError() && items().length === 0) {
         <p class="youtube-history-empty">No recent or saved searches yet.</p>
-      } @else if (filtered().length === 0) {
+      } @else if (!loading() && filtered().length === 0 && items().length > 0) {
         <p class="youtube-history-empty">No history matches “{{ filter().trim() }}”.</p>
-      } @else {
+      } @else if (filtered().length > 0) {
         <ul class="youtube-history-modal-list">
           @for (item of filtered(); track item._id || item.query) {
             <li class="youtube-history-modal-item" [class.is-active]="isActive(item)">

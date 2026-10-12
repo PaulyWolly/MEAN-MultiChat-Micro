@@ -364,3 +364,46 @@ export function highestCachedPageForQuery(query, type = "search") {
 export function queriesMatch(a, b) {
   return youtubeQueriesLooselyEqual(a, b)
 }
+
+const HISTORY_LIST_NAME = "yt_history_list"
+
+/** Lean History rows only — never store videoResults in this list cache. */
+function leanHistoryRow(row) {
+  if (!row || typeof row !== "object") return null
+  const query = normalizeYouTubeQuery(row.query || row.displayName)
+  if (!query) return null
+  return {
+    _id: row._id || undefined,
+    query,
+    displayName: row.displayName || query.replace(/\./g, " "),
+    totalPages: row.totalPages,
+    videoCount: row.videoCount,
+    lastSearched: row.lastSearched,
+    dateCreated: row.dateCreated,
+    isSaved: row.isSaved !== false,
+  }
+}
+
+/** Instant History list from localStorage (scoped per account). */
+export function listCachedYouTubeHistory() {
+  const raw = readScoped(HISTORY_LIST_NAME)
+  if (!Array.isArray(raw)) return []
+  return raw.map(leanHistoryRow).filter(Boolean)
+}
+
+/** Persist lean Mongo History rows after a successful /saved-searches fetch. */
+export function setCachedYouTubeHistory(searches = []) {
+  const lean = (Array.isArray(searches) ? searches : [])
+    .map(leanHistoryRow)
+    .filter(Boolean)
+  return writeRaw(scopeCacheKey(HISTORY_LIST_NAME), lean)
+}
+
+/** Drop the cached History list for the active account (e.g. logout). */
+export function clearCachedYouTubeHistory() {
+  try {
+    localStorage.removeItem(scopeCacheKey(HISTORY_LIST_NAME))
+  } catch {
+    /* ignore */
+  }
+}

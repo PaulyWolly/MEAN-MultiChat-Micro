@@ -137,6 +137,7 @@
   [open]="historyOpen()"
   [items]="historyItems()"
   [activeQuery]="activeQuery()"
+  [loading]="historyLoading()"
   [loadError]="historyLoadError()"
   (closed)="historyOpen.set(false)"
   (selected)="handleSavedClick($event)"

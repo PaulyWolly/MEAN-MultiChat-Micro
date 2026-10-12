@@ -1969,65 +1969,46 @@ router.get('/saved-searches', requireDataScope, async (req, res) => {
                 : {}),
         };
 
+        // History list must stay lean — loading videoResults for ~270 docs
+        // can be multi‑MB and leaves the UI stuck on a few local-only rows.
         const savedSearches = await YouTubeSearch.find(filter)
-            .sort({ lastSearched: -1 });
+            .select(
+                'query displayName totalPages videoCount lastSearched dateCreated searchMetadata isSaved',
+            )
+            .sort({ lastSearched: -1 })
+            .lean();
 
         console.log('📚 [YOUTUBE-DB] Found', savedSearches.length, 'searches');
 
         res.json({
             success: true,
-            searches: savedSearches.map(search => {
-                const cachedPages = Array.isArray(search.videoResults)
-                    ? search.videoResults.length
-                    : 0;
+            searches: savedSearches.map((search) => {
                 const storedPages = Number(search.totalPages) || 0;
+                let name = String(search.displayName || search.query || '')
+                    .replace(/^[@＠]+/gu, '')
+                    .replace(/[:;,.!?…]+$/gu, '')
+                    .replace(
+                        /^(?:youtube\s+(?:search|seach|play|channel|movies?|tv)|youtube|search|channel|movies?|tv)\s+/i,
+                        '',
+                    )
+                    .trim();
+                if (name && name === name.toLowerCase()) {
+                    name = name.replace(/\b[a-z]/g, (c) => c.toUpperCase());
+                }
                 return {
                     _id: search._id,
                     query: search.query,
-                    displayName: (() => {
-                        const hints = (Array.isArray(search.videoResults) ? search.videoResults : [])
-                            .flatMap((p) => (p.videos || []).slice(0, 4).map((v) => v.title || ''))
-                            .filter(Boolean)
-                            .slice(0, 16);
-                        // Repair legacy labels before the client renders History
-                        let name = String(search.displayName || search.query || '')
-                            .replace(/^[@＠]+/gu, '')
-                            .replace(/[:;,.!?…]+$/gu, '')
-                            .replace(/^(?:youtube\s+(?:search|seach|play|channel|movies?|tv)|youtube|search|channel|movies?|tv)\s+/i, '')
-                            .trim();
-                        const skel = youtubeConsonantSkeletonServer(name);
-                        for (const title of hints) {
-                            const head = String(title || '')
-                                .replace(/^@+/g, '')
-                                .split(/\s+[-\u2013|:]+|\s+[(\[]/)[0]
-                                ?.trim();
-                            if (!head) continue;
-                            if (skel && youtubeConsonantSkeletonServer(head) === skel) {
-                                const words = name.split(/\s+/).length || 1;
-                                const repaired = head.split(/\s+/).slice(0, words).join(' ');
-                                name = preferYouTubeDisplayNameServer(name, repaired);
-                                break;
-                            }
-                        }
-                        if (name && name === name.toLowerCase()) {
-                            name = name.replace(/\b[a-z]/g, (c) => c.toUpperCase());
-                        }
-                        return name || search.displayName;
-                    })(),
-                    totalPages: Math.max(cachedPages, storedPages) || search.totalPages || 1,
+                    displayName: name || search.displayName,
+                    totalPages: storedPages || search.totalPages || 1,
                     videoCount: search.videoCount,
                     lastSearched: search.lastSearched,
                     dateCreated: search.dateCreated,
                     searchMetadata: search.searchMetadata,
                     isSaved: search.isSaved !== false,
-                    hasCachedPages: cachedPages > 0,
-                    // Lightweight titles so the client can repair "Sigur Rs" → "Sigur Rós"
-                    titleHints: (Array.isArray(search.videoResults) ? search.videoResults : [])
-                        .flatMap((p) => (p.videos || []).slice(0, 4).map((v) => v.title || ''))
-                        .filter(Boolean)
-                        .slice(0, 16),
+                    hasCachedPages: false,
+                    titleHints: [],
                 };
-            })
+            }),
         });
     } catch (error) {
         console.error('📚 [YOUTUBE-DB] Error retrieving searches:', error);

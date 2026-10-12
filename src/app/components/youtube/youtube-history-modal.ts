@@ -44,6 +44,7 @@ export class YouTubeHistoryModalComponent implements AfterViewInit, OnDestroy {
   open = input(false);
   items = input<any[]>([]);
   activeQuery = input('');
+  loading = input(false);
   loadError = input('');
   closed = output();
   selected = output<any>();

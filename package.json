@@ -11,7 +11,7 @@
     "kill:dev": "node scripts/kill-dev.mjs",
     "install:backend": "node scripts/install-backend.mjs",
     "dev": "npm run kill:dev && cross-env NX_TUI=false nx run mean-multichat-micro:dev-stack --output-style=stream",
-    "dev:micro": "npm run kill:dev && cross-env NX_TUI=false nx run-many -t serve --parallel=100 --output-style=stream --projects=gateway,auth,rag,images,chat,media,speech,jokes,recipes,profile,usage,platform,monolith,mean-multichat-micro",
+    "dev:micro": "node scripts/dev-micro.mjs",
     "dev:client": "nx serve mean-multichat-micro",
     "dev:server": "nx run monolith:serve-dev",
     "start:server": "cross-env PORT=4800 npm --prefix backend/server start",

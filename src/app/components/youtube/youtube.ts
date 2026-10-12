@@ -28,6 +28,7 @@ import {
   getAllCachedPagesForQuery,
   getCachedYouTubePage,
   highestCachedPageForQuery,
+  listCachedYouTubeHistory,
   listRecentYouTubeQueries,
   normalizeYouTubeQuery,
   preferYouTubeDisplayName,
@@ -35,6 +36,7 @@ import {
   queriesMatch,
   rememberRecentYouTubeQuery,
   repairYouTubeDisplayNameFromTitles,
+  setCachedYouTubeHistory,
   youtubeConsonantSkeleton,
 } from './youtube-cache';
 import { youtubeChannelEmbedSrc, youtubeChannelHref } from './youtube-channel';
@@ -192,11 +194,13 @@ export class YouTubeComponent implements OnInit, OnDestroy {
   cacheSource = signal('');
   saving = signal(false);
   activeQuery = signal('');
-  mongoSearches = signal<any[]>([]);
+  mongoSearches = signal<any[]>(listCachedYouTubeHistory());
   recentLocal = signal<any[]>(listRecentYouTubeQueries());
   historyOpen = signal(false);
+  historyLoading = signal(false);
   historyLoadError = signal('');
   pendingHistoryDelete = signal<any | null>(null);
+  private historyLoadGen = 0;
   playlistOpen = signal(false);
   pendingVideo = signal<any | null>(null);
   favoritedVideoIds = signal<Set<string>>(new Set());
@@ -297,27 +301,43 @@ export class YouTubeComponent implements OnInit, OnDestroy {
   }
 
   async loadSaved() {
+    const gen = ++this.historyLoadGen;
     this.historyLoadError.set('');
+    this.recentLocal.set(listRecentYouTubeQueries());
+
+    // Paint instantly from localStorage, then refresh from Mongo in the background.
+    const cached = listCachedYouTubeHistory();
+    if (cached.length && gen === this.historyLoadGen) {
+      this.mongoSearches.set(cached);
+      this.historyLoading.set(false);
+    } else {
+      this.historyLoading.set(true);
+    }
+
     try {
       if (this.auth.isAuthenticated()) {
-        const ok = await this.auth.refreshSession();
-        if (!ok) {
-          throw new Error(
-            'Session expired or not signed in — please sign out and sign back in, then open History again.',
-          );
-        }
+        // Do not call refreshSession() here — a failed verify logs the user out
+        // and navigates away, so History looks like it never opened.
         const data = await listSavedYouTubeSearches();
-        this.mongoSearches.set(data.searches || data.results || []);
-      } else {
+        if (gen !== this.historyLoadGen) return;
+        const searches = data.searches || data.results || [];
+        this.mongoSearches.set(searches);
+        setCachedYouTubeHistory(searches);
+      } else if (gen === this.historyLoadGen) {
         this.mongoSearches.set([]);
+        setCachedYouTubeHistory([]);
       }
     } catch (err: any) {
-      this.mongoSearches.set([]);
+      if (gen !== this.historyLoadGen) return;
       const message = err?.message || 'Could not load YouTube history from MongoDB.';
       this.historyLoadError.set(message);
-      if (this.historyOpen()) this.toast.show(message, 'error');
+      // Only toast when we have nothing local to show.
+      if (this.historyOpen() && !this.mongoSearches().length) {
+        this.toast.show(message, 'error');
+      }
+    } finally {
+      if (gen === this.historyLoadGen) this.historyLoading.set(false);
     }
-    this.recentLocal.set(listRecentYouTubeQueries());
   }
 
   async loadFavoritedVideos() {
@@ -552,8 +572,10 @@ export class YouTubeComponent implements OnInit, OnDestroy {
   }
 
   async openHistory() {
-    await this.loadSaved();
+    // Open immediately (Playlists does the same). Loading Mongo history after
+    // keeps a slow/hung refreshSession from making History look broken.
     this.historyOpen.set(true);
+    await this.loadSaved();
   }
 
   async persistSave(q: string) {

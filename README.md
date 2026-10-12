@@ -21,7 +21,7 @@ backend/server/       Express monolith (port 4810 in micro mode; 4800 for npm ru
 backend/services/     Gateway + microservices (ports 4800–4812)
 ```
 
-Task orchestration uses **Nx** (`nx.json` + per-service `project.json`). Folders stay where they are; Nx only runs the same start commands in parallel.
+Task orchestration uses **Nx** (`nx.json` + per-service `project.json`). Folders stay where they are; Nx runs the peels and Angular. The gateway starts on an inherited TTY (see `scripts/dev-micro.mjs`) so the ♡ heartbeat can overwrite one terminal line.
 
 ## Setup
 

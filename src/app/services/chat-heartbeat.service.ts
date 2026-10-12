@@ -47,10 +47,13 @@ export class ChatHeartbeatService implements OnDestroy {
     try {
       const es = new EventSource(url);
       this.source = es;
+      // EventSource reconnects on its own for transient drops; only force a
+      // fresh connect after CLOSE (readyState 2) so we do not abort a live stream.
       es.onerror = () => {
-        es.close();
-        if (this.source === es) this.source = null;
         if (this.stopped) return;
+        if (es.readyState !== EventSource.CLOSED) return;
+        if (this.source === es) this.source = null;
+        if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
         this.reconnectTimer = setTimeout(() => this.connect(), 4000);
       };
     } catch {

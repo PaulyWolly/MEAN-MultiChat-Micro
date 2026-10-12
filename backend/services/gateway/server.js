@@ -82,7 +82,54 @@ app.get('/healthz', (_req, res) => {
  * Classic MultiChat SSE heartbeat lives on the gateway (quiet edge process)
  * so the ♡/❤️/💗 \r animation stays the most recent terminal line.
  * POST /api/chat still proxies to chat-service.
+ *
+ * Terminal animation is a process-wide singleton. Prefer starting the gateway
+ * with an inherited TTY (`npm run dev:micro` → scripts/dev-micro.mjs) so `\r`
+ * can overwrite one line. When stdout is piped (Nx stream), skip animation to
+ * avoid a new log line every tick.
  */
+const HEARTS = ['♡', '❤️', '💗'];
+let terminalHeartPhase = 0;
+let terminalHeartTimer = null;
+let terminalHeartClients = 0;
+let terminalHeartNotePrinted = false;
+
+function canAnimateTerminalHeart() {
+  return Boolean(process.stdout.isTTY);
+}
+
+function startTerminalHeart() {
+  terminalHeartClients += 1;
+  if (!canAnimateTerminalHeart()) {
+    if (!terminalHeartNotePrinted) {
+      terminalHeartNotePrinted = true;
+      console.log(
+        '[gateway] SSE heartbeat active (♡ animation needs a TTY — use npm run dev:micro)',
+      );
+    }
+    return;
+  }
+  if (terminalHeartTimer) return;
+  terminalHeartTimer = setInterval(() => {
+    const heart = HEARTS[terminalHeartPhase];
+    process.stdout.write('\r\u001b[?25l');
+    process.stdout.write(
+      `💓 Heartbeat ${new Date().toLocaleTimeString()} ${heart}                \u001b[?25l`,
+    );
+    terminalHeartPhase = (terminalHeartPhase + 1) % HEARTS.length;
+  }, 500);
+}
+
+function stopTerminalHeart() {
+  terminalHeartClients = Math.max(0, terminalHeartClients - 1);
+  if (terminalHeartClients > 0 || !terminalHeartTimer) return;
+  clearInterval(terminalHeartTimer);
+  terminalHeartTimer = null;
+  if (canAnimateTerminalHeart()) {
+    process.stdout.write('\u001b[?25h\n');
+  }
+}
+
 app.get('/api/chat', (req, res) => {
   let isConnected = false;
   let connectionAttempts = 0;
@@ -98,18 +145,16 @@ app.get('/api/chat', (req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
+  res.setHeader('X-Accel-Buffering', 'no');
   // Avoid proxy/socket errors taking down the whole gateway process.
   res.on('error', (err) => {
-    console.log('[gateway] SSE response error:', err.message);
-    cleanup('response-error');
+    cleanup(err?.message === 'aborted' ? 'client-abort' : 'response-error', err);
   });
   req.on('error', (err) => {
-    console.log('[gateway] SSE request error:', err.message);
-    cleanup('request-error');
+    cleanup(err?.message === 'aborted' ? 'client-abort' : 'request-error', err);
   });
   req.socket?.on('error', (err) => {
-    console.log('[gateway] SSE socket error:', err.message);
-    cleanup('socket-error');
+    cleanup(err?.message === 'aborted' ? 'client-abort' : 'socket-error', err);
   });
   res.flushHeaders?.();
 
@@ -117,12 +162,12 @@ app.get('/api/chat', (req, res) => {
     res.write(`data: ${JSON.stringify({ type: 'connection', status: 'established' })}\n\n`);
   } catch (err) {
     console.log('[gateway] SSE initial write failed:', err.message);
-    cleanup('initial-write');
+    cleanup('initial-write', err);
     return;
   }
   isConnected = true;
+  startTerminalHeart();
 
-  let heartPhase = 0;
   const heartbeatInterval = setInterval(() => {
     if (cleanedUp || res.writableEnded || res.destroyed) {
       cleanup('not-writable');
@@ -138,14 +183,6 @@ app.get('/api/chat', (req, res) => {
       }
     }
 
-    const hearts = ['♡', '❤️', '💗'];
-    const heart = hearts[heartPhase];
-    process.stdout.write(`\r\u001b[?25l`);
-    process.stdout.write(
-      `💓 Heartbeat ${new Date().toLocaleTimeString()} ${heart}                \u001b[?25l`,
-    );
-    heartPhase = (heartPhase + 1) % 3;
-
     try {
       const ok = res.write(`data: ${JSON.stringify({ type: 'heartbeat' })}\n\n`);
       if (ok === false) {
@@ -158,20 +195,27 @@ app.get('/api/chat', (req, res) => {
     } catch (error) {
       console.log('Heartbeat error:', error.message);
       isConnected = false;
-      cleanup('write-throw');
+      cleanup('write-throw', error);
     }
   }, 500);
 
-  function cleanup(reason) {
+  function cleanup(reason, err) {
     if (cleanedUp) return;
     cleanedUp = true;
     clearInterval(heartbeatInterval);
-    process.stdout.write(`\u001b[?25h`);
-    process.stdout.write('\n');
+    stopTerminalHeart();
+    // Browser EventSource reconnects / HMR aborts are normal — keep logs quiet.
+    if (reason === 'client-abort' || reason === 'client-close') {
+      if (err?.message && err.message !== 'aborted') {
+        console.log(`[gateway] SSE ${reason}:`, err.message);
+      }
+      return;
+    }
     console.log('\n━━━━━━━━━━━ SSE Connection Closed ━━━━━━━━━━━');
     console.log('Time:', new Date().toLocaleTimeString());
     console.log('Session:', req.query.sessionId);
     console.log('Reason:', reason);
+    if (err?.message) console.log('Error:', err.message);
     console.log('Final connection state:');
     console.log(JSON.stringify({ isConnected, attempts: connectionAttempts }, null, 4));
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
